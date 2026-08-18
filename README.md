@@ -171,21 +171,6 @@ admin, _ := blogadmin.New(blogadmin.AdminOptions{
 The anonymous struct matches `shopadmin` exactly, so you can reuse
 your existing shopadmin layout function.
 
-## Authentication
-
-Provide an `AuthUserID` function to gate access. If it returns `""`, the
-request is redirected to `AdminHomeURL`:
-
-```go
-admin, _ := blogadmin.New(blogadmin.AdminOptions{
-    Store:      store,
-    Logger:     logger,
-    AuthUserID: func(r *http.Request) string {
-        // return authenticated user ID, or ""
-    },
-})
-```
-
 ## Testing
 
 ```bash
