@@ -6,7 +6,7 @@ require (
 	github.com/aws/smithy-go v1.27.8
 	github.com/dracory/api v1.8.0
 	github.com/dracory/base v0.39.0
-	github.com/dracory/blogstore v1.34.1
+	github.com/dracory/blogstore v1.35.0
 	github.com/dracory/bs v0.16.0
 	github.com/dracory/cdn v1.11.0
 	github.com/dracory/customstore v1.14.0
