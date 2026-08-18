@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/dracory/api"
 	"github.com/dracory/blogadmin/shared"
@@ -13,7 +14,6 @@ import (
 	"github.com/dracory/hb"
 	"github.com/dracory/neat"
 	"github.com/dracory/req"
-	"github.com/dromara/carbon/v2"
 	"github.com/spf13/cast"
 )
 
@@ -26,6 +26,23 @@ const (
 	actionDeletePost = "delete-post"
 	actionCreatePost = "create-post"
 )
+
+// Condition field constants for the multi-filter system.
+const (
+	CondFieldSearch   = "search"
+	CondFieldStatus   = "status"
+	CondFieldSlug     = "slug"
+	CondFieldDateFrom = "date_from"
+	CondFieldDateTo   = "date_to"
+	CondFieldFeatured = "featured"
+)
+
+// condition is a single filter condition sent from the frontend.
+type condition struct {
+	Field    string `json:"field"`
+	Operator string `json:"operator"`
+	Value    string `json:"value"`
+}
 
 // UiInterface defines the post manager controller's UI interface
 type UiInterface interface {
@@ -156,26 +173,71 @@ func (u *ui) handleLoadPosts(w http.ResponseWriter, r *http.Request) string {
 		return api.Error("Blog store not available").ToString()
 	}
 
-	// Read parameters from query string for GET requests
-	page := cast.ToInt(req.GetStringTrimmedOr(r, "page", "0"))
-	perPage := cast.ToInt(req.GetStringTrimmedOr(r, "per_page", "10"))
-	sortOrder := req.GetStringTrimmedOr(r, "sort_order", neat.SortDesc)
-	sortBy := req.GetStringTrimmedOr(r, "sort_by", blogstore.COLUMN_CREATED_AT)
-	status := req.GetStringTrimmed(r, "status")
-	search := req.GetStringTrimmed(r, "search")
-	dateFrom := req.GetStringTrimmedOr(r, "date_from", carbon.Now().AddYears(-1).ToDateString())
-	dateTo := req.GetStringTrimmedOr(r, "date_to", carbon.Now().ToDateString())
-
-	query := blogstore.PostQueryOptions{
-		Search:               search,
-		Offset:               page * perPage,
-		Limit:                perPage,
-		Status:               status,
-		CreatedAtGreaterThan: dateFrom + " 00:00:00",
-		CreatedAtLessThan:    dateTo + " 23:59:59",
-		SortOrder:            sortOrder,
-		OrderBy:              sortBy,
+	// Accept both POST (JSON body with conditions) and GET (query params
+	// for backward compatibility). POST is the primary path used by the
+	// Vue frontend; GET keeps shareable URLs working.
+	var reqBody struct {
+		Page       int         `json:"page"`
+		PerPage    int         `json:"per_page"`
+		SortBy     string      `json:"sort_by"`
+		SortOrder  string      `json:"sort_order"`
+		Conditions []condition `json:"conditions"`
 	}
+
+	if r.Method == http.MethodPost {
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			return api.Error("Invalid request body").ToString()
+		}
+	} else {
+		// Fallback: read from query params (legacy / shareable URLs)
+		reqBody.Page = cast.ToInt(req.GetStringTrimmedOr(r, "page", "0"))
+		reqBody.PerPage = cast.ToInt(req.GetStringTrimmedOr(r, "per_page", "10"))
+		reqBody.SortBy = req.GetStringTrimmedOr(r, "sort_by", blogstore.COLUMN_CREATED_AT)
+		reqBody.SortOrder = req.GetStringTrimmedOr(r, "sort_order", neat.SortDesc)
+
+		// Build conditions from individual query params
+		if v := req.GetStringTrimmed(r, "search"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldSearch, "contains", v})
+		}
+		if v := req.GetStringTrimmed(r, "status"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldStatus, "equals", v})
+		}
+		if v := req.GetStringTrimmed(r, "slug"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldSlug, "equals", v})
+		}
+		if v := req.GetStringTrimmed(r, "date_from"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldDateFrom, "equals", v})
+		}
+		if v := req.GetStringTrimmed(r, "date_to"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldDateTo, "equals", v})
+		}
+		if v := req.GetStringTrimmed(r, "featured"); v != "" {
+			reqBody.Conditions = append(reqBody.Conditions, condition{CondFieldFeatured, "equals", v})
+		}
+	}
+
+	if reqBody.Page < 0 {
+		reqBody.Page = 0
+	}
+	if reqBody.PerPage <= 0 || reqBody.PerPage > 500 {
+		reqBody.PerPage = 10
+	}
+	if reqBody.SortBy == "" {
+		reqBody.SortBy = blogstore.COLUMN_CREATED_AT
+	}
+	if reqBody.SortOrder == "" {
+		reqBody.SortOrder = neat.SortDesc
+	}
+
+	// Build query from conditions
+	query := blogstore.PostQueryOptions{
+		Offset:    reqBody.Page * reqBody.PerPage,
+		Limit:     reqBody.PerPage,
+		OrderBy:   reqBody.SortBy,
+		SortOrder: reqBody.SortOrder,
+	}
+
+	applyConditions(&query, reqBody.Conditions)
 
 	posts, err := blogStore.PostList(ctx, query)
 	if err != nil {
@@ -204,10 +266,46 @@ func (u *ui) handleLoadPosts(w http.ResponseWriter, r *http.Request) string {
 		return api.Error("Failed to get posts count").ToString()
 	}
 
+	totalPages := int(count) / reqBody.PerPage
+	if int(count)%reqBody.PerPage != 0 {
+		totalPages++
+	}
+
 	return api.SuccessWithData("Posts loaded successfully", map[string]any{
-		"posts": postList,
-		"total": count,
+		"posts":       postList,
+		"total":       count,
+		"page":        reqBody.Page,
+		"per_page":    reqBody.PerPage,
+		"total_pages": totalPages,
 	}).ToString()
+}
+
+// applyConditions maps filter conditions to PostQueryOptions fields.
+// Multiple conditions on the same field: last one wins for single-value
+// fields (status, slug, search). Date conditions accumulate.
+func applyConditions(query *blogstore.PostQueryOptions, conds []condition) {
+	for _, c := range conds {
+		val := strings.TrimSpace(c.Value)
+		if val == "" {
+			continue
+		}
+		switch c.Field {
+		case CondFieldSearch:
+			query.Search = val
+		case CondFieldStatus:
+			query.Status = val
+		case CondFieldSlug:
+			query.Slug = val
+		case CondFieldDateFrom:
+			query.CreatedAtGreaterThan = val + " 00:00:00"
+		case CondFieldDateTo:
+			query.CreatedAtLessThan = val + " 23:59:59"
+		case CondFieldFeatured:
+			// Featured is stored in meta; we can't filter at the store
+			// level easily, so this is a no-op for now. The frontend
+			// could filter in-memory if needed.
+		}
+	}
 }
 
 func (u *ui) handleDeletePost(w http.ResponseWriter, r *http.Request) string {

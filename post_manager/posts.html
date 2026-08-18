@@ -9,29 +9,29 @@
     <!-- Action Bar -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h5 class="mb-0">Posts</h5>
-      <button @click="openCreateModal()" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i> New Post
-      </button>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="card bg-light mb-3">
-      <div class="card-body d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
-          <button @click="openFilterModal()" class="btn btn-primary me-3">
-            <i class="bi bi-funnel me-1"></i> Filters
-          </button>
-          <span class="text-muted">{{ filterStatus }}</span>
-        </div>
-        <button 
-          @click="clearFilters()" 
-          class="btn btn-sm btn-outline-secondary" 
-          title="Clear all filters"
-          v-if="filters.search || filters.status"
-        >
-          <i class="bi bi-x-circle"></i>
+      <div class="d-flex gap-2">
+        <button @click="openCreateModal()" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-1"></i> New Post
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" @click="openFilterModal" v-if="conditions.length === 0">
+          <i class="bi bi-funnel"></i> Add Filters
+        </button>
+        <button class="btn btn-primary btn-sm" @click="openFilterModal" v-if="conditions.length > 0">
+          <i class="bi bi-funnel-fill"></i> Filters ({{ conditions.length }})
+        </button>
+        <button class="btn btn-outline-danger btn-sm" @click="clearConditions" v-if="conditions.length > 0">
+          Clear
         </button>
       </div>
+    </div>
+
+    <!-- Active filter tags -->
+    <div class="alert alert-light border d-flex flex-wrap gap-2 align-items-center" v-if="conditions.length > 0">
+      <span class="text-muted small me-2">Active filters:</span>
+      <span v-for="(c, i) in conditions" :key="i" class="badge bg-secondary d-inline-flex align-items-center gap-1">
+        {{ fieldLabel(c.field) }} {{ opLabel(c.operator) }} {{ c.value }}
+        <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.6em;" @click="removeCondition(i)"></button>
+      </span>
     </div>
 
     <!-- Posts Table -->
@@ -86,10 +86,10 @@
         <tbody>
           <tr v-for="post in posts" :key="post.id">
             <td class="text-center">
-              <img 
-                v-if="post.image_url" 
-                :src="post.image_url" 
-                alt="" 
+              <img
+                v-if="post.image_url"
+                :src="post.image_url"
+                alt=""
                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
               />
               <span v-else class="text-muted" style="font-size: 24px;">&mdash;</span>
@@ -101,7 +101,7 @@
               <div class="text-muted small">Ref: {{ post.id }}</div>
             </td>
             <td>
-              <span 
+              <span
                 class="fw-semibold text-capitalize"
                 :class="{
                   'text-success': post.status === 'published',
@@ -126,10 +126,10 @@
               <div class="small text-muted text-nowrap">{{ formatDate(post.updated_at) }}</div>
             </td>
             <td>
-              <a 
-                :href="getAiPostContentUrl(post.id)" 
-                target="_blank" 
-                class="btn btn-warning btn-sm me-2" 
+              <a
+                :href="getAiPostContentUrl(post.id)"
+                target="_blank"
+                class="btn btn-warning btn-sm me-2"
                 title="AI Content Editor"
               >
                 <i class="bi bi-magic"></i>
@@ -164,21 +164,22 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPosts > 0" class="d-flex justify-content-left mt-5 pagination-primary-soft rounded mb-0">
+    <div v-if="totalPosts > 0" class="d-flex justify-content-between align-items-center mt-3">
+      <span class="small text-muted">Page {{ currentPage + 1 }} of {{ totalPages }} — {{ totalPosts }} total</span>
       <nav>
-        <ul class="pagination">
+        <ul class="pagination pagination-sm mb-0">
           <li class="page-item" :class="{ disabled: currentPage === 0 }">
             <a class="page-link" href="#" @click.prevent="goToPage(currentPage - 1)">Previous</a>
           </li>
-          <li 
-            v-for="page in visiblePages" 
-            :key="page" 
-            class="page-item" 
+          <li
+            v-for="page in visiblePages"
+            :key="page"
+            class="page-item"
             :class="{ active: page === currentPage }"
           >
             <a class="page-link" href="#" @click.prevent="goToPage(page)">{{ page + 1 }}</a>
           </li>
-          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+          <li class="page-item" :class="{ disabled: currentPage >= totalPages - 1 }">
             <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
           </li>
         </ul>
@@ -197,20 +198,20 @@
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label">Title *</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                v-model="createForm.title" 
+              <input
+                type="text"
+                class="form-control"
+                v-model="createForm.title"
                 placeholder="Post title"
-                required 
+                required
               />
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeCreateModal()">Cancel</button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
+            <button
+              type="button"
+              class="btn btn-primary"
               @click="createPost()"
               :disabled="!createForm.title || creating"
             >
@@ -225,54 +226,55 @@
     <!-- Filter Modal -->
     <div v-if="showFilterModal" class="modal-backdrop fade show" style="display: block; z-index: 1040;"></div>
     <div v-if="showFilterModal" class="modal fade show" style="display: block; z-index: 1050;">
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Filter Posts</h5>
+            <h5 class="modal-title">Filter Conditions</h5>
             <button type="button" class="btn-close" @click="closeFilterModal()"></button>
           </div>
           <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Search</label>
-              <input 
-                type="search" 
-                class="form-control" 
-                v-model="filters.search" 
-                placeholder="reference, title, content ..."
-              />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Status</label>
-              <select v-model="filters.status" class="form-select">
-                <option value="">All Statuses</option>
-                <option value="draft">Draft</option>
-                <option value="unpublished">Unpublished</option>
-                <option value="published">Published</option>
-                <option value="trash">Deleted</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Date Range</label>
-              <div class="input-group">
-                <input 
-                  type="date" 
-                  v-model="filters.dateFrom" 
-                  class="form-control" 
-                  placeholder="From"
-                />
-                <span class="input-group-text">to</span>
-                <input 
-                  type="date" 
-                  v-model="filters.dateTo" 
-                  class="form-control" 
-                  placeholder="To"
-                />
+            <p class="text-muted small mb-3">
+              Add multiple conditions to filter posts. Conditions are combined with AND.
+            </p>
+
+            <div v-for="(c, i) in modalConditions" :key="i" class="row g-2 mb-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label small">Field</label>
+                <select v-model="c.field" class="form-select form-select-sm" @change="onFieldChange(c)">
+                  <option value="">— Select field —</option>
+                  <option v-for="opt in conditionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-2" v-if="c.field && getFieldOperators(c.field).length > 1">
+                <label class="form-label small">Match</label>
+                <select v-model="c.operator" class="form-select form-select-sm">
+                  <option v-for="op in getFieldOperators(c.field)" :key="op" :value="op">{{ opLabel(op) }}</option>
+                </select>
+              </div>
+              <div class="col-md-4" v-if="c.field">
+                <label class="form-label small">Value</label>
+                <input v-if="getFieldInputType(c.field) === 'text'" v-model="c.value" type="text" class="form-control form-control-sm" :placeholder="getFieldPlaceholder(c.field)">
+                <input v-else-if="getFieldInputType(c.field) === 'date'" v-model="c.value" type="date" class="form-control form-control-sm">
+                <select v-else-if="getFieldInputType(c.field) === 'select'" v-model="c.value" class="form-select form-select-sm">
+                  <option value="">— Select —</option>
+                  <option v-for="s in statusOptions" :key="s.value" :value="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-2" v-if="c.field">
+                <button class="btn btn-outline-danger btn-sm w-100" @click="removeModalCondition(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
               </div>
             </div>
+
+            <button class="btn btn-outline-primary btn-sm mt-2" @click="addModalCondition">
+              <i class="bi bi-plus-circle"></i> Add Condition
+            </button>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="clearFilters()">Clear Filters</button>
-            <button type="button" class="btn btn-primary" @click="applyFilters()">Apply Filters</button>
+            <button type="button" class="btn btn-secondary" @click="closeFilterModal()">Cancel</button>
+            <button type="button" class="btn btn-outline-danger" @click="clearModalConditions" v-if="modalConditions.length > 0">Clear All</button>
+            <button type="button" class="btn btn-primary" @click="applyConditions()">Apply Filters</button>
           </div>
         </div>
       </div>

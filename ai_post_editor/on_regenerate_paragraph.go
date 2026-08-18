@@ -3,7 +3,7 @@ package ai_post_editor
 import (
 	"log/slog"
 
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
 	"github.com/dracory/req"
 	"github.com/spf13/cast"

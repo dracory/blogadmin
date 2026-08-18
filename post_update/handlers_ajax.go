@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dracory/api"
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/blogstore"
 	"github.com/dracory/neat"
 	"github.com/dracory/req"

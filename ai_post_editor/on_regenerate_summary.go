@@ -1,7 +1,7 @@
 package ai_post_editor
 
 import (
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
 )
 

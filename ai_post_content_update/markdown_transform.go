@@ -1,9 +1,9 @@
-package aipostcontentupdate
+package ai_post_content_update
 
 import (
 	"strings"
 
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 
 	"github.com/dracory/uid"
 	"github.com/samber/lo"

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
 	"github.com/dracory/req"
 )

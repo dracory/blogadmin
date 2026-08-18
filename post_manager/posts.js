@@ -2,137 +2,144 @@ const { createApp } = Vue;
 
 /**
  * BlogPostsApp is a Vue.js component for managing blog posts.
- * It provides a table view with filtering, sorting, pagination,
+ * It provides a table view with multi-filter tags, sorting, pagination,
  * and CRUD operations for posts.
+ *
+ * The filter system follows the statsstore pattern: each filter is a
+ * {field, operator, value} condition. Multiple conditions are AND-combined.
+ * Active filters show as removable badge tags. The URL encodes all
+ * conditions as JSON so filter state is shareable/bookmarkable.
  */
 const BlogPostsApp = {
   data() {
     return {
       // UI state
-      loading: true, // Whether posts are being loaded
-      showCreateModal: false, // Whether the create post modal is visible
-      showFilterModal: false, // Whether the filter modal is visible
-      creating: false, // Whether a post is being created
+      loading: true,
+      showCreateModal: false,
+      showFilterModal: false,
+      creating: false,
 
       // Post data
-      posts: [], // Array of post objects
-      totalPosts: 0, // Total number of posts
+      posts: [],
+      totalPosts: 0,
+      totalPages: 0,
 
-      // Pagination
-      currentPage: 0, // Current page number (0-indexed)
-      perPage: 10, // Number of posts per page
+      // Pagination (0-indexed)
+      currentPage: 0,
+      perPage: 10,
 
-      // Filters
-      filters: {
-        search: '', // Search query for title/content
-        status: '', // Post status filter (draft, published, etc.)
-        dateFrom: '', // Start date filter
-        dateTo: '' // End date filter
-      },
+      // Applied conditions (sent to the server)
+      conditions: [],
+
+      // Modal state — cloned from conditions when opening
+      modalConditions: [],
 
       // Sorting
-      sortByColumn: 'created_at', // Column to sort by
-      sortOrder: 'desc', // Sort order (asc or desc)
+      sortByColumn: 'created_at',
+      sortOrder: 'desc',
 
       // Create post form
       createForm: {
-        title: '' // Post title for new post
+        title: ''
       }
     };
   },
 
   computed: {
-    /**
-     * Returns the total number of pages based on total posts and per page setting.
-     */
-    totalPages() {
-      return Math.ceil(this.totalPosts / this.perPage);
-    },
-
-    /**
-     * Returns an array of visible page numbers for pagination.
-     * Shows up to 5 pages centered around the current page.
-     */
     visiblePages() {
       const pages = [];
       const start = Math.max(0, this.currentPage - 2);
       const end = Math.min(this.totalPages - 1, this.currentPage + 2);
-      
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
       return pages;
-    },
-
-    /**
-     * Returns a human-readable string describing the current filter state.
-     */
-    filterStatus() {
-      const parts = [];
-      if (this.filters.search) parts.push(`search: "${this.filters.search}"`);
-      if (this.filters.status) parts.push(`status: ${this.filters.status}`);
-      if (this.filters.dateFrom) parts.push(`from: ${this.filters.dateFrom}`);
-      if (this.filters.dateTo) parts.push(`to: ${this.filters.dateTo}`);
-      
-      if (parts.length === 0) return 'Showing all posts';
-      return 'Showing posts with ' + parts.join(', ');
     }
   },
 
   mounted() {
-    // Read filters from URL parameters for shareable URLs
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    this.filters.search = urlParams.get('search') || '';
-    this.filters.status = urlParams.get('status') || '';
-    this.filters.dateFrom = urlParams.get('date_from') || '';
-    this.filters.dateTo = urlParams.get('date_to') || '';
-    this.sortByColumn = urlParams.get('sort_by') || 'created_at';
-    this.sortOrder = urlParams.get('sort_order') || 'desc';
-    this.currentPage = parseInt(urlParams.get('page') || '0', 10);
-    this.perPage = parseInt(urlParams.get('per_page') || '10', 10);
-
-    // Set default date range if not in URL
-    if (!this.filters.dateFrom || !this.filters.dateTo) {
-      const today = new Date();
-      const lastYear = new Date(today);
-      lastYear.setFullYear(today.getFullYear() - 1);
-      
-      this.filters.dateTo = today.toISOString().split('T')[0];
-      this.filters.dateFrom = lastYear.toISOString().split('T')[0];
-    }
-    
+    this.loadFromURL();
     this.loadPosts();
   },
 
   methods: {
-    /**
-     * Loads posts from the server based on current filters, pagination, and sorting.
-     * Makes a GET request to the posts load API endpoint.
-     */
+    // === Filter modal ===
+
+    openFilterModal() {
+      this.modalConditions = this.conditions.map(c => ({ ...c }));
+      if (this.modalConditions.length === 0) {
+        this.modalConditions.push({ field: '', operator: 'equals', value: '' });
+      }
+      this.showFilterModal = true;
+    },
+
+    closeFilterModal() {
+      this.showFilterModal = false;
+    },
+
+    addModalCondition() {
+      this.modalConditions.push({ field: '', operator: 'equals', value: '' });
+    },
+
+    removeModalCondition(i) {
+      this.modalConditions.splice(i, 1);
+    },
+
+    clearModalConditions() {
+      this.modalConditions = [];
+    },
+
+    onFieldChange(c) {
+      const opt = this.getFieldOpt(c.field);
+      if (opt) {
+        c.operator = opt.operators[0];
+      }
+      c.value = '';
+    },
+
+    applyConditions() {
+      this.conditions = this.modalConditions.filter(c => c.field && c.value.trim());
+      this.showFilterModal = false;
+      this.currentPage = 0;
+      this.loadPosts();
+      this.updateURL();
+    },
+
+    clearConditions() {
+      this.conditions = [];
+      this.currentPage = 0;
+      this.loadPosts();
+      this.updateURL();
+    },
+
+    removeCondition(i) {
+      this.conditions.splice(i, 1);
+      this.currentPage = 0;
+      this.loadPosts();
+      this.updateURL();
+    },
+
+    // === Data loading ===
+
     async loadPosts() {
       this.loading = true;
       try {
-        const params = new URLSearchParams({
-          page: this.currentPage,
-          per_page: this.perPage,
-          search: this.filters.search,
-          status: this.filters.status,
-          date_from: this.filters.dateFrom,
-          date_to: this.filters.dateTo,
-          sort_order: this.sortOrder,
-          sort_by: this.sortByColumn
+        const response = await fetch(urlPostsLoad, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page: this.currentPage,
+            per_page: this.perPage,
+            sort_by: this.sortByColumn,
+            sort_order: this.sortOrder,
+            conditions: this.conditions,
+          }),
         });
-
-        const separator = urlPostsLoad.includes('?') ? '&' : '?';
-        const url = `${urlPostsLoad}${separator}${params.toString()}`;
-        
-        const response = await fetch(url);
         const data = await response.json();
-        
         if (data.status === 'success') {
           this.posts = data.data?.posts || [];
           this.totalPosts = data.data?.total || 0;
+          this.totalPages = data.data?.total_pages || 0;
         } else {
           Swal.fire({
             icon: 'error',
@@ -152,35 +159,92 @@ const BlogPostsApp = {
       }
     },
 
-    /**
-     * Sorts the posts by the specified column.
-     * Toggles sort order if clicking the same column.
-     */
+    // === Sorting ===
+
     sortBy(column) {
       if (this.sortByColumn === column) {
-        // Toggle sort order
         this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
       } else {
-        // New column, default to asc
         this.sortByColumn = column;
         this.sortOrder = 'asc';
       }
-      this.currentPage = 0; // Reset to first page when sorting
-      this.applyFilters(); // This will update URL and reload
+      this.currentPage = 0;
+      this.loadPosts();
+      this.updateURL();
     },
 
-    /**
-     * Navigates to the specified page number.
-     */
+    // === Pagination ===
+
     goToPage(page) {
       if (page < 0 || page >= this.totalPages) return;
       this.currentPage = page;
-      this.applyFilters(); // This will update URL and reload
+      this.loadPosts();
+      this.updateURL();
     },
 
-    /**
-     * Deletes the specified post after confirmation.
-     */
+    // === URL encode/decode ===
+
+    updateURL() {
+      const params = new URLSearchParams();
+      // Preserve controller param
+      const existing = new URLSearchParams(window.location.search);
+      const controller = existing.get('controller');
+      if (controller) params.set('controller', controller);
+
+      if (this.conditions.length > 0) {
+        params.set('filters', JSON.stringify(this.conditions));
+      }
+      if (this.currentPage > 0) {
+        params.set('page', String(this.currentPage));
+      }
+      if (this.perPage !== 10) {
+        params.set('per_page', String(this.perPage));
+      }
+      if (this.sortByColumn !== 'created_at') {
+        params.set('sort_by', this.sortByColumn);
+      }
+      if (this.sortOrder !== 'desc') {
+        params.set('sort_order', this.sortOrder);
+      }
+
+      const qs = params.toString();
+      const newURL = qs ? window.location.pathname + '?' + qs : window.location.pathname;
+      history.replaceState(null, '', newURL);
+    },
+
+    loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+
+      // Try JSON filters first (new format)
+      const filtersRaw = params.get('filters');
+      if (filtersRaw) {
+        try {
+          const parsed = JSON.parse(filtersRaw);
+          if (Array.isArray(parsed)) {
+            this.conditions = parsed.filter(c => c && c.field && c.value);
+          }
+        } catch (e) { /* ignore malformed */ }
+      } else {
+        // Fallback: read legacy individual params
+        if (params.get('search')) this.conditions.push({ field: 'search', operator: 'contains', value: params.get('search') });
+        if (params.get('status')) this.conditions.push({ field: 'status', operator: 'equals', value: params.get('status') });
+        if (params.get('slug')) this.conditions.push({ field: 'slug', operator: 'equals', value: params.get('slug') });
+        if (params.get('date_from')) this.conditions.push({ field: 'date_from', operator: 'equals', value: params.get('date_from') });
+        if (params.get('date_to')) this.conditions.push({ field: 'date_to', operator: 'equals', value: params.get('date_to') });
+      }
+
+      const pageRaw = params.get('page');
+      if (pageRaw) this.currentPage = parseInt(pageRaw, 10) || 0;
+
+      const perPageRaw = params.get('per_page');
+      if (perPageRaw) this.perPage = parseInt(perPageRaw, 10) || 10;
+
+      this.sortByColumn = params.get('sort_by') || 'created_at';
+      this.sortOrder = params.get('sort_order') || 'desc';
+    },
+
+    // === CRUD ===
+
     async deletePost(post) {
       const result = await Swal.fire({
         icon: 'warning',
@@ -191,212 +255,121 @@ const BlogPostsApp = {
         cancelButtonText: 'Cancel',
         confirmButtonColor: '#dc3545'
       });
-
       if (!result.isConfirmed) return;
 
       try {
         const response = await fetch(urlPostDelete, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ post_id: post.id })
         });
-
         const data = await response.json();
-        
         if (data.status === 'success') {
-          Swal.fire({
-            icon: 'success',
-            title: 'Deleted',
-            text: 'Post deleted successfully',
-            timer: 1500,
-            showConfirmButton: false
-          });
+          Swal.fire({ icon: 'success', title: 'Deleted', text: 'Post deleted successfully', timer: 1500, showConfirmButton: false });
           this.loadPosts();
         } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: data.message || 'Failed to delete post'
-          });
+          Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Failed to delete post' });
         }
       } catch (error) {
-        console.error('Error deleting post:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to delete post'
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete post' });
       }
     },
 
-    /**
-     * Formats a date string to a human-readable format (e.g., "15 Apr 2026").
-     */
-    formatDate(dateString) {
-      if (!dateString) return '-';
-      const date = new Date(dateString);
-      const options = { day: 'numeric', month: 'short', year: 'numeric' };
-      return date.toLocaleDateString('en-GB', options);
+    async createPost() {
+      if (!this.createForm.title) return;
+      this.creating = true;
+      try {
+        const response = await fetch(urlPostCreate, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: this.createForm.title })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+          Swal.fire({ icon: 'success', title: 'Success', text: 'Post created successfully', timer: 1500, showConfirmButton: false });
+          this.closeCreateModal();
+          window.open(urlPostUpdate.replace('POST_ID_PLACEHOLDER', data.data.id), '_blank');
+          this.loadPosts();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Failed to create post' });
+        }
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to create post' });
+      } finally {
+        this.creating = false;
+      }
     },
 
-    /**
-     * Returns the URL for viewing a post on the website.
-     */
-    getWebsitePostUrl(postId, slug) {
-      return `/blog/post/${postId}/${slug}`;
-    },
+    // === Helpers ===
 
-    /**
-     * Returns the URL for the AI post content update page.
-     */
-    getAiPostContentUrl(postId) {
-      return urlAiPostContentUpdate.replace('POST_ID_PLACEHOLDER', postId);
-    },
-
-    /**
-     * Returns the URL for the post update/edit page.
-     */
-    getPostUpdateUrl(postId) {
-      return urlPostUpdate.replace('POST_ID_PLACEHOLDER', postId);
-    },
-
-    /**
-     * Opens the create post modal and resets the form.
-     */
     openCreateModal() {
       this.createForm.title = '';
       this.showCreateModal = true;
     },
 
-    /**
-     * Closes the create post modal and resets the form.
-     */
     closeCreateModal() {
       this.showCreateModal = false;
       this.createForm.title = '';
     },
 
-    /**
-     * Opens the filter modal.
-     */
-    openFilterModal() {
-      this.showFilterModal = true;
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     },
 
-    /**
-     * Closes the filter modal.
-     */
-    closeFilterModal() {
-      this.showFilterModal = false;
+    getWebsitePostUrl(postId, slug) {
+      return `/blog/post/${postId}/${slug}`;
     },
 
-    /**
-     * Applies the current filters and updates the URL.
-     * This makes the filter state shareable via URL.
-     */
-    applyFilters() {
-      // Update URL with filter parameters using GET
-      const urlParams = new URLSearchParams(window.location.search);
-      
-      // Preserve controller parameter
-      const controller = urlParams.get('controller');
-      
-      const params = new URLSearchParams();
-      if (controller) params.set('controller', controller);
-      if (this.filters.search) params.set('search', this.filters.search);
-      if (this.filters.status) params.set('status', this.filters.status);
-      if (this.filters.dateFrom) params.set('date_from', this.filters.dateFrom);
-      if (this.filters.dateTo) params.set('date_to', this.filters.dateTo);
-      params.set('page', 0); // Reset to first page when applying filters
-      params.set('per_page', this.perPage);
-      params.set('sort_order', this.sortOrder);
-      params.set('sort_by', this.sortByColumn);
-
-      // Update URL without reloading
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-      window.history.pushState({}, '', newUrl);
-
-      this.closeFilterModal();
-      this.loadPosts();
+    getAiPostContentUrl(postId) {
+      return urlAiPostContentUpdate.replace('POST_ID_PLACEHOLDER', postId);
     },
 
-    /**
-     * Clears all filters and resets to default state.
-     */
-    clearFilters() {
-      this.filters = {
-        search: '',
-        status: '',
-        dateFrom: '',
-        dateTo: ''
-      };
-
-      // Reset date range to default
-      const today = new Date();
-      const lastYear = new Date(today);
-      lastYear.setFullYear(today.getFullYear() - 1);
-      
-      this.filters.dateTo = today.toISOString().split('T')[0];
-      this.filters.dateFrom = lastYear.toISOString().split('T')[0];
-
-      this.applyFilters();
+    getPostUpdateUrl(postId) {
+      return urlPostUpdate.replace('POST_ID_PLACEHOLDER', postId);
     },
 
-    /**
-     * Creates a new post with the title from the form.
-     * Opens the edit page in a new tab on success.
-     */
-    async createPost() {
-      if (!this.createForm.title) return;
+    // === Filter option helpers ===
 
-      this.creating = true;
-      try {
-        const response = await fetch(urlPostCreate, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: this.createForm.title
-          })
-        });
+    getFieldOpt(value) {
+      return this.conditionOptions.find(o => o.value === value);
+    },
+    fieldLabel(v) { const o = this.getFieldOpt(v); return o ? o.label : v; },
+    opLabel(op) { return this.opLabels[op] || op; },
+    getFieldOperators(v) { const o = this.getFieldOpt(v); return o ? o.operators : ['equals']; },
+    getFieldInputType(v) { const o = this.getFieldOpt(v); return o ? o.inputType : 'text'; },
+    getFieldPlaceholder(v) { const o = this.getFieldOpt(v); return o ? o.placeholder : ''; },
+  },
 
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Post created successfully',
-            timer: 1500,
-            showConfirmButton: false
-          });
-          this.closeCreateModal();
-          // Navigate to edit page
-          window.open(urlPostUpdate.replace('POST_ID_PLACEHOLDER', data.data.id), '_blank');
-          this.loadPosts();
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: data.message || 'Failed to create post'
-          });
-        }
-      } catch (error) {
-        console.error('Error creating post:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to create post'
-        });
-      } finally {
-        this.creating = false;
-      }
-    }
+  // Exposed as data so the template can access them
+  setup() {
+    // These are constants, not reactive — but Vue data() is the
+    // simplest place to expose them to the template.
   }
 };
+
+// Condition option definitions — must match the Go CondField* constants.
+BlogPostsApp.data = (function(originalData) {
+  return function() {
+    const data = originalData.call(this);
+    data.conditionOptions = [
+      { value: 'search',    label: 'Search',         operators: ['contains'], inputType: 'text',  placeholder: 'title or content...' },
+      { value: 'status',    label: 'Status',         operators: ['equals'],   inputType: 'select', placeholder: '' },
+      { value: 'slug',      label: 'Slug',           operators: ['equals'],   inputType: 'text',  placeholder: 'e.g. my-first-post' },
+      { value: 'date_from', label: 'Created after',  operators: ['equals'],   inputType: 'date',  placeholder: '' },
+      { value: 'date_to',   label: 'Created before', operators: ['equals'],   inputType: 'date',  placeholder: '' },
+    ];
+    data.opLabels = { equals: '=', contains: 'contains' };
+    data.statusOptions = [
+      { value: 'draft',      label: 'Draft' },
+      { value: 'published',  label: 'Published' },
+      { value: 'unpublished',label: 'Unpublished' },
+      { value: 'trash',      label: 'Trash' },
+    ];
+    return data;
+  };
+})(BlogPostsApp.data);
 
 // Mount the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

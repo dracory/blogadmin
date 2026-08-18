@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/dracory/blogadmin/shared"
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/hb"
 	"github.com/dracory/req"
 	"github.com/dracory/wf"

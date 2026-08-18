@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dracory/blogadmin/shared"
-	"github.com/dracory/blogai"
+	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/customstore"
 	"github.com/dracory/hb"
 	"github.com/dracory/req"
