@@ -157,19 +157,20 @@ etc.), provide `FuncLayout`:
 admin, _ := blogadmin.New(blogadmin.AdminOptions{
     Store:  store,
     Logger: logger,
-    FuncLayout: func(title, body string, opts struct {
+    FuncLayout: func(w http.ResponseWriter, r *http.Request, title, body string, opts struct {
         Styles     []string
         StyleURLs  []string
         Scripts    []string
         ScriptURLs []string
     }) string {
-        return myLayout(title, body, opts)
+        return myLayout(w, r, title, body, opts)
     },
 })
 ```
 
-The anonymous struct matches `shopadmin` exactly, so you can reuse
-your existing shopadmin layout function.
+`FuncLayout` receives the request and response writer so the host
+project can access request context (auth user, locale, etc.) when
+rendering the layout.
 
 ## Testing
 
