@@ -64,8 +64,10 @@ type AdminOptions struct {
 	LlmFactory shared.LlmFactoryFunc
 
 	// FuncLayout is an optional function to render the admin interface
-	// inside your own layout (branding, menus, etc.).
-	FuncLayout func(title string, body string, options struct {
+	// inside your own layout (branding, menus, etc.). It receives the
+	// request and response writer so the host project can access request
+	// context (auth user, locale, etc.) when rendering the layout.
+	FuncLayout func(w http.ResponseWriter, r *http.Request, title string, body string, options struct {
 		Styles     []string
 		StyleURLs  []string
 		Scripts    []string
@@ -93,12 +95,12 @@ type AdminInterface interface {
 
 // admin implements AdminInterface
 type admin struct {
-	store          blogstore.StoreInterface
-	logger         *slog.Logger
-	customStore    customstore.StoreInterface
-	settingStore   settingstore.StoreInterface
-	llmFactory     shared.LlmFactoryFunc
-	funcLayout     func(title string, body string, options struct {
+	store        blogstore.StoreInterface
+	logger       *slog.Logger
+	customStore  customstore.StoreInterface
+	settingStore settingstore.StoreInterface
+	llmFactory   shared.LlmFactoryFunc
+	funcLayout   func(w http.ResponseWriter, r *http.Request, title string, body string, options struct {
 		Styles     []string
 		StyleURLs  []string
 		Scripts    []string
@@ -191,20 +193,24 @@ func (a *admin) buildRoutes() map[string]func(w http.ResponseWriter, r *http.Req
 	}
 
 	return map[string]func(w http.ResponseWriter, r *http.Request){
-		shared.CONTROLLER_DASHBOARD:              func(w http.ResponseWriter, r *http.Request) { dashboard.UI(uiConfig).Dashboard(w, r) },
-		shared.CONTROLLER_POST_MANAGER:           func(w http.ResponseWriter, r *http.Request) { post_manager.UI(uiConfig).PostManager(w, r) },
-		shared.CONTROLLER_POST_CREATE:            func(w http.ResponseWriter, r *http.Request) { post_create.UI(uiConfig).PostCreate(w, r) },
-		shared.CONTROLLER_POST_UPDATE:            func(w http.ResponseWriter, r *http.Request) { post_update.UI(uiConfig, a.fileManagerURL).PostUpdate(w, r) },
-		shared.CONTROLLER_POST_DELETE:            func(w http.ResponseWriter, r *http.Request) { post_delete.UI(uiConfig).PostDelete(w, r) },
-		shared.CONTROLLER_CATEGORY_MANAGER:       func(w http.ResponseWriter, r *http.Request) { category_manager.UI(uiConfig).CategoryManager(w, r) },
-		shared.CONTROLLER_TAG_MANAGER:            func(w http.ResponseWriter, r *http.Request) { tag_manager.UI(uiConfig).TagManager(w, r) },
-		shared.CONTROLLER_BLOG_SETTINGS:          func(w http.ResponseWriter, r *http.Request) { blog_settings.UI(uiConfig).BlogSettings(w, r) },
-		shared.CONTROLLER_AI_TOOLS:               func(w http.ResponseWriter, r *http.Request) { ai_tools.UI(uiConfig).AiTools(w, r) },
-		shared.CONTROLLER_AI_TEST:                func(w http.ResponseWriter, r *http.Request) { ai_test.UI(uiConfig).AiTest(w, r) },
-		shared.CONTROLLER_AI_POST_GENERATOR:      func(w http.ResponseWriter, r *http.Request) { ai_post_generator.UI(uiConfig).AiPostGenerator(w, r) },
-		shared.CONTROLLER_AI_TITLE_GENERATOR:     func(w http.ResponseWriter, r *http.Request) { ai_title_generator.UI(uiConfig).AiTitleGenerator(w, r) },
-		shared.CONTROLLER_AI_POST_EDITOR:         func(w http.ResponseWriter, r *http.Request) { ai_post_editor.UI(uiConfig).AiPostEditor(w, r) },
-		shared.CONTROLLER_AI_POST_CONTENT_UPDATE: func(w http.ResponseWriter, r *http.Request) { ai_post_content_update.UI(uiConfig).AiPostContentUpdate(w, r) },
+		shared.CONTROLLER_DASHBOARD:    func(w http.ResponseWriter, r *http.Request) { dashboard.UI(uiConfig).Dashboard(w, r) },
+		shared.CONTROLLER_POST_MANAGER: func(w http.ResponseWriter, r *http.Request) { post_manager.UI(uiConfig).PostManager(w, r) },
+		shared.CONTROLLER_POST_CREATE:  func(w http.ResponseWriter, r *http.Request) { post_create.UI(uiConfig).PostCreate(w, r) },
+		shared.CONTROLLER_POST_UPDATE: func(w http.ResponseWriter, r *http.Request) {
+			post_update.UI(uiConfig, a.fileManagerURL).PostUpdate(w, r)
+		},
+		shared.CONTROLLER_POST_DELETE:        func(w http.ResponseWriter, r *http.Request) { post_delete.UI(uiConfig).PostDelete(w, r) },
+		shared.CONTROLLER_CATEGORY_MANAGER:   func(w http.ResponseWriter, r *http.Request) { category_manager.UI(uiConfig).CategoryManager(w, r) },
+		shared.CONTROLLER_TAG_MANAGER:        func(w http.ResponseWriter, r *http.Request) { tag_manager.UI(uiConfig).TagManager(w, r) },
+		shared.CONTROLLER_BLOG_SETTINGS:      func(w http.ResponseWriter, r *http.Request) { blog_settings.UI(uiConfig).BlogSettings(w, r) },
+		shared.CONTROLLER_AI_TOOLS:           func(w http.ResponseWriter, r *http.Request) { ai_tools.UI(uiConfig).AiTools(w, r) },
+		shared.CONTROLLER_AI_TEST:            func(w http.ResponseWriter, r *http.Request) { ai_test.UI(uiConfig).AiTest(w, r) },
+		shared.CONTROLLER_AI_POST_GENERATOR:  func(w http.ResponseWriter, r *http.Request) { ai_post_generator.UI(uiConfig).AiPostGenerator(w, r) },
+		shared.CONTROLLER_AI_TITLE_GENERATOR: func(w http.ResponseWriter, r *http.Request) { ai_title_generator.UI(uiConfig).AiTitleGenerator(w, r) },
+		shared.CONTROLLER_AI_POST_EDITOR:     func(w http.ResponseWriter, r *http.Request) { ai_post_editor.UI(uiConfig).AiPostEditor(w, r) },
+		shared.CONTROLLER_AI_POST_CONTENT_UPDATE: func(w http.ResponseWriter, r *http.Request) {
+			ai_post_content_update.UI(uiConfig).AiPostContentUpdate(w, r)
+		},
 	}
 }
 
@@ -222,7 +228,7 @@ func (a *admin) render(w http.ResponseWriter, r *http.Request, webpageTitle, web
 }) string {
 	// If a custom layout is provided, try it first
 	if a.funcLayout != nil {
-		custom := a.funcLayout(webpageTitle, webpageHtml, options)
+		custom := a.funcLayout(w, r, webpageTitle, webpageHtml, options)
 		if custom != "" {
 			if w != nil {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
