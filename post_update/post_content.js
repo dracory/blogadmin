@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const PostContentApp = {
   data() {
     return {
@@ -657,11 +655,15 @@ const PostContentApp = {
 };
 
 // Mount the app immediately
-const el = document.getElementById('post-content-app');
-if (el) {
-  console.log('Mounting PostContentApp on #post-content-app');
-  createApp(PostContentApp).mount('#post-content-app');
-  console.log('PostContentApp mounted successfully');
-} else {
-  console.error('Could not find #post-content-app element');
-}
+loadVueIfNeeded((err) => {
+  if (err) { console.error('Vue load failed:', err); return; }
+  const { createApp } = Vue;
+  const el = document.getElementById('post-content-app');
+  if (el) {
+    console.log('Mounting PostContentApp on #post-content-app');
+    createApp(PostContentApp).mount('#post-content-app');
+    console.log('PostContentApp mounted successfully');
+  } else {
+    console.error('Could not find #post-content-app element');
+  }
+});

@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 /**
  * BlogPostsApp is a Vue.js component for managing blog posts.
  * It provides a table view with multi-filter tags, sorting, pagination,
@@ -44,7 +42,27 @@ const BlogPostsApp = {
       // Create post form
       createForm: {
         title: ''
-      }
+      },
+
+      // Filter condition options — must match the Go CondField* constants.
+      conditionOptions: [
+        { value: 'search',    label: 'Search',         operators: ['contains'], inputType: 'text',  placeholder: 'title or content...' },
+        { value: 'status',    label: 'Status',         operators: ['equals'],   inputType: 'select', placeholder: '' },
+        { value: 'slug',      label: 'Slug',           operators: ['equals'],   inputType: 'text',  placeholder: 'e.g. my-first-post' },
+        { value: 'date_from', label: 'Created after',  operators: ['equals'],   inputType: 'date',  placeholder: '' },
+        { value: 'date_to',   label: 'Created before', operators: ['equals'],   inputType: 'date',  placeholder: '' },
+      ],
+
+      // Operator display labels
+      opLabels: { equals: '=', contains: 'contains' },
+
+      // Status dropdown options
+      statusOptions: [
+        { value: 'draft',       label: 'Draft' },
+        { value: 'published',   label: 'Published' },
+        { value: 'unpublished', label: 'Unpublished' },
+        { value: 'trash',       label: 'Trash' },
+      ]
     };
   },
 
@@ -343,41 +361,17 @@ const BlogPostsApp = {
     getFieldOperators(v) { const o = this.getFieldOpt(v); return o ? o.operators : ['equals']; },
     getFieldInputType(v) { const o = this.getFieldOpt(v); return o ? o.inputType : 'text'; },
     getFieldPlaceholder(v) { const o = this.getFieldOpt(v); return o ? o.placeholder : ''; },
-  },
-
-  // Exposed as data so the template can access them
-  setup() {
-    // These are constants, not reactive — but Vue data() is the
-    // simplest place to expose them to the template.
   }
 };
 
-// Condition option definitions — must match the Go CondField* constants.
-BlogPostsApp.data = (function(originalData) {
-  return function() {
-    const data = originalData.call(this);
-    data.conditionOptions = [
-      { value: 'search',    label: 'Search',         operators: ['contains'], inputType: 'text',  placeholder: 'title or content...' },
-      { value: 'status',    label: 'Status',         operators: ['equals'],   inputType: 'select', placeholder: '' },
-      { value: 'slug',      label: 'Slug',           operators: ['equals'],   inputType: 'text',  placeholder: 'e.g. my-first-post' },
-      { value: 'date_from', label: 'Created after',  operators: ['equals'],   inputType: 'date',  placeholder: '' },
-      { value: 'date_to',   label: 'Created before', operators: ['equals'],   inputType: 'date',  placeholder: '' },
-    ];
-    data.opLabels = { equals: '=', contains: 'contains' };
-    data.statusOptions = [
-      { value: 'draft',      label: 'Draft' },
-      { value: 'published',  label: 'Published' },
-      { value: 'unpublished',label: 'Unpublished' },
-      { value: 'trash',      label: 'Trash' },
-    ];
-    return data;
-  };
-})(BlogPostsApp.data);
-
 // Mount the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('blog-posts-app');
-  if (el) {
-    createApp(BlogPostsApp).mount('#blog-posts-app');
-  }
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('blog-posts-app');
+    if (el) {
+      createApp(BlogPostsApp).mount('#blog-posts-app');
+    }
+  });
 });

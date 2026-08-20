@@ -246,13 +246,13 @@
                   <option v-for="opt in conditionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                 </select>
               </div>
-              <div class="col-md-2" v-if="c.field && getFieldOperators(c.field).length > 1">
+              <div class="col-md-3" v-if="c.field">
                 <label class="form-label small">Match</label>
                 <select v-model="c.operator" class="form-select form-select-sm">
                   <option v-for="op in getFieldOperators(c.field)" :key="op" :value="op">{{ opLabel(op) }}</option>
                 </select>
               </div>
-              <div class="col-md-4" v-if="c.field">
+              <div class="col-md-3" v-if="c.field">
                 <label class="form-label small">Value</label>
                 <input v-if="getFieldInputType(c.field) === 'text'" v-model="c.value" type="text" class="form-control form-control-sm" :placeholder="getFieldPlaceholder(c.field)">
                 <input v-else-if="getFieldInputType(c.field) === 'date'" v-model="c.value" type="date" class="form-control form-control-sm">

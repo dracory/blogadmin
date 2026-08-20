@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const TitleSettingsApp = {
   data() {
     return {
@@ -84,6 +82,10 @@ const TitleSettingsApp = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('title-settings-app');
-  if (el) createApp(TitleSettingsApp).mount('#title-settings-app');
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('title-settings-app');
+    if (el) createApp(TitleSettingsApp).mount('#title-settings-app');
+  });
 });

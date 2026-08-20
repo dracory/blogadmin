@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const BlogSettingsApp = {
   data() {
     return {
@@ -90,6 +88,10 @@ const BlogSettingsApp = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('blog-settings-app');
-  if (el) createApp(BlogSettingsApp).mount('#blog-settings-app');
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('blog-settings-app');
+    if (el) createApp(BlogSettingsApp).mount('#blog-settings-app');
+  });
 });

@@ -32,8 +32,6 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 
 	linksHelper := shared.NewLinksFromRequest(r)
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
-
 	initScript := hb.Script(`
 		window.postEditorPostId = '` + postID + `';
 		window.postEditorBackUrl = '` + linksHelper.PostUpdate(map[string]string{"post_id": postID}) + `';
@@ -46,7 +44,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)

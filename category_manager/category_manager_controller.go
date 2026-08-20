@@ -85,7 +85,6 @@ func (u *ui) renderPage(r *http.Request) string {
 		return hb.Div().HTML("Error loading categories component").ToHTML()
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	sortableCDN := hb.Script("").Src("https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js")
 
 	linksHelper := shared.NewLinksFromRequest(r)
@@ -101,7 +100,7 @@ func (u *ui) renderPage(r *http.Request) string {
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(sortableCDN).
 		Child(htmlTemplate).
 		Child(initScript).

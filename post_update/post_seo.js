@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const PostSEOApp = {
   data() {
     return {
@@ -143,7 +141,11 @@ const PostSEOApp = {
 };
 
 // Mount the app immediately
-const el = document.getElementById('post-seo-app');
-if (el) {
-  createApp(PostSEOApp).mount('#post-seo-app');
-}
+loadVueIfNeeded((err) => {
+  if (err) { console.error('Vue load failed:', err); return; }
+  const { createApp } = Vue;
+  const el = document.getElementById('post-seo-app');
+  if (el) {
+    createApp(PostSEOApp).mount('#post-seo-app');
+  }
+});

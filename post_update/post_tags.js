@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const PostTagsApp = {
   data() {
     return {
@@ -100,7 +98,11 @@ const PostTagsApp = {
 };
 
 // Mount the app immediately
-const el = document.getElementById('post-tags-app');
-if (el) {
-  createApp(PostTagsApp).mount('#post-tags-app');
-}
+loadVueIfNeeded((err) => {
+  if (err) { console.error('Vue load failed:', err); return; }
+  const { createApp } = Vue;
+  const el = document.getElementById('post-tags-app');
+  if (el) {
+    createApp(PostTagsApp).mount('#post-tags-app');
+  }
+});

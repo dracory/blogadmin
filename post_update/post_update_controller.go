@@ -154,7 +154,6 @@ func (u *ui) Handler(w http.ResponseWriter, r *http.Request) string {
 			cdn.Sweetalert2_10(),
 			cdn.JqueryUiJs_1_13_1(),
 			blockAreaJS,
-			cdn.VueJs_3_5_32(),
 		},
 		StyleURLs: []string{
 			cdn.JqueryUiCss_1_13_1(),

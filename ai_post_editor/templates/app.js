@@ -383,7 +383,10 @@ const postEditorApp = {
 
 // Initialize Vue app after the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    Vue.createApp(postEditorApp).mount('#post-editor-app');
+    loadVueIfNeeded(function(err) {
+        if (err) { console.error('Vue load failed:', err); return; }
+        Vue.createApp(postEditorApp).mount('#post-editor-app');
+    });
 });
 
 async function apiPost(body) {

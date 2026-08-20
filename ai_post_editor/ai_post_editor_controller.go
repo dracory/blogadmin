@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/dracory/blogadmin/ai_post_editor/templates"
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/cdn"
 	"github.com/dracory/customstore"
 	"github.com/dracory/hb"
@@ -95,7 +95,6 @@ func (u *ui) Handler(w http.ResponseWriter, r *http.Request) string {
 	}{
 		ScriptURLs: []string{
 			cdn.Sweetalert2_11(),
-			cdn.VueJs_3(),
 		},
 	})
 }
@@ -174,6 +173,7 @@ func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 				Class("d-flex justify-content-between mb-3").
 				Child(backButton),
 			).
+			Child(shared.VueLoaderScript()).
 			Child(vueApp).
 			Child(vueScript).
 			Child(vueStyles),

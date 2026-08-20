@@ -5,7 +5,6 @@ import (
 
 	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogstore"
-	"github.com/dracory/cdn"
 	"github.com/dracory/hb"
 )
 
@@ -22,7 +21,6 @@ func (u *ui) renderCategoriesView(r *http.Request, post blogstore.PostInterface)
 		return hb.Div().HTML("Error loading categories component")
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	linksHelper := shared.NewLinksFromRequest(r)
 
 	initScript := hb.Script(`
@@ -36,7 +34,7 @@ func (u *ui) renderCategoriesView(r *http.Request, post blogstore.PostInterface)
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)
@@ -57,7 +55,6 @@ func (u *ui) renderTagsView(r *http.Request, post blogstore.PostInterface) hb.Ta
 		return hb.Div().HTML("Error loading tags component")
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	linksHelper := shared.NewLinksFromRequest(r)
 
 	initScript := hb.Script(`
@@ -71,7 +68,7 @@ func (u *ui) renderTagsView(r *http.Request, post blogstore.PostInterface) hb.Ta
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)
@@ -92,7 +89,6 @@ func (u *ui) renderDetailsView(r *http.Request, post blogstore.PostInterface) hb
 		return hb.Div().HTML("Error loading details component")
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	linksHelper := shared.NewLinksFromRequest(r)
 
 	initScript := hb.Script(`
@@ -107,7 +103,7 @@ func (u *ui) renderDetailsView(r *http.Request, post blogstore.PostInterface) hb
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)
@@ -128,7 +124,6 @@ func (u *ui) renderContentView(r *http.Request, post blogstore.PostInterface) hb
 		return hb.Div().HTML("Error loading content component")
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	linksHelper := shared.NewLinksFromRequest(r)
 
 	initScript := hb.Script(`
@@ -142,7 +137,7 @@ func (u *ui) renderContentView(r *http.Request, post blogstore.PostInterface) hb
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)
@@ -163,7 +158,6 @@ func (u *ui) renderSEOView(r *http.Request, post blogstore.PostInterface) hb.Tag
 		return hb.Div().HTML("Error loading SEO component")
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 	linksHelper := shared.NewLinksFromRequest(r)
 
 	initScript := hb.Script(`
@@ -176,7 +170,7 @@ func (u *ui) renderSEOView(r *http.Request, post blogstore.PostInterface) hb.Tag
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)
@@ -217,11 +211,9 @@ func (u *ui) renderVersioningModal(r *http.Request, post blogstore.PostInterface
 		[v-cloak] { display: none; }
 	`)
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
-
 	vueContainer := hb.Div().
 		Child(vCloakStyle).
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(configScript).
 		Child(htmlTemplate).
 		Child(componentScript)

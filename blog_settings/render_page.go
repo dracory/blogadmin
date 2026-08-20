@@ -21,8 +21,6 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 		return hb.Div().HTML("Error loading settings component").ToHTML()
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
-
 	linksHelper := shared.NewLinksFromRequest(r)
 	initScript := hb.Script(`
 		window.blogSettingsReturnUrl = '` + linksHelper.PostManager(nil) + `';
@@ -34,7 +32,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)

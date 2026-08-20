@@ -1,6 +1,4 @@
 (function() {
-  const { createApp } = Vue;
-
   const PostVersioningApp = {
     data() {
       return {
@@ -237,8 +235,12 @@
     }
   };
 
-  const el = document.getElementById('post-versioning-app');
-  if (el) {
-    createApp(PostVersioningApp).mount('#post-versioning-app');
-  }
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('post-versioning-app');
+    if (el) {
+      createApp(PostVersioningApp).mount('#post-versioning-app');
+    }
+  });
 })();

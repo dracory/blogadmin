@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/dracory/base/htmx"
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/cdn"
 	"github.com/dracory/customstore"
 	"github.com/dracory/hb"
@@ -135,15 +135,13 @@ func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 	settingsModalHTML, _ := settingsModalFiles.ReadFile("settings_modal.html")
 	settingsModalJS, _ := settingsModalFiles.ReadFile("settings_modal.js")
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
-
 	initScript := hb.Script(`
 		const urlTitleSettingsFetchData = '` + linksHelper.AiTitleGenerator(map[string]string{"action": ACTION_SETTINGS_FETCH}) + `';
 		const urlTitleSettingsSubmit = '` + linksHelper.AiTitleGenerator(map[string]string{"action": ACTION_SETTINGS_SUBMIT}) + `';
 	`)
 
 	settingsVueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(hb.Wrap().HTML(string(settingsModalHTML))).
 		Child(initScript).
 		Child(hb.Script(string(settingsModalJS)))

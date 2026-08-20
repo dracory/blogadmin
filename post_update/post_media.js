@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const PostMediaApp = {
   data() {
     return {
@@ -454,7 +452,11 @@ const PostMediaApp = {
   }
 };
 
-const el = document.getElementById('post-media-app');
-if (el) {
-  createApp(PostMediaApp).mount('#post-media-app');
-}
+loadVueIfNeeded((err) => {
+  if (err) { console.error('Vue load failed:', err); return; }
+  const { createApp } = Vue;
+  const el = document.getElementById('post-media-app');
+  if (el) {
+    createApp(PostMediaApp).mount('#post-media-app');
+  }
+});

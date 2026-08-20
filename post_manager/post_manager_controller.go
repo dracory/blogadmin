@@ -133,8 +133,6 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 		return hb.Div().HTML("Error loading posts component").ToHTML()
 	}
 
-	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
-
 	// aiEnabledJS exposes the AI-enabled flag to the Vue app so it can
 	// hide the per-row AI Content Editor button when AI is disabled.
 	aiEnabledJS := "false"
@@ -155,7 +153,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	componentScript := hb.Script(string(jsContent))
 
 	vueContainer := hb.Div().
-		Child(vueCDN).
+		Child(shared.VueLoaderScript()).
 		Child(htmlTemplate).
 		Child(initScript).
 		Child(componentScript)

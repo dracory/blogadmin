@@ -9,10 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/api"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogstore"
-	"github.com/dracory/cdn"
 	"github.com/dracory/hb"
 	"github.com/dracory/req"
 )
@@ -52,7 +51,7 @@ func (c *postMediaComponent) Render(r *http.Request, post blogstore.PostInterfac
 	`
 
 	return hb.Div().
-		Child(hb.Script("").Src(cdn.VueJs_3_5_32())).
+		Child(shared.VueLoaderScript()).
 		Child(hb.Wrap().HTML(string(htmlContent))).
 		Child(hb.Script(initScript)).
 		Child(hb.Script(string(jsContent)))

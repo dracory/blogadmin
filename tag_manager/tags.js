@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const BlogTagsApp = {
   data() {
     return {
@@ -240,8 +238,12 @@ const BlogTagsApp = {
 
 // Mount the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('blog-tags-app');
-  if (el) {
-    createApp(BlogTagsApp).mount('#blog-tags-app');
-  }
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('blog-tags-app');
+    if (el) {
+      createApp(BlogTagsApp).mount('#blog-tags-app');
+    }
+  });
 });

@@ -1,5 +1,3 @@
-const { createApp } = Vue;
-
 const PostEditorApp = {
   data() {
     return {
@@ -193,6 +191,10 @@ const PostEditorApp = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('post-editor-app');
-  if (el) createApp(PostEditorApp).mount('#post-editor-app');
+  loadVueIfNeeded((err) => {
+    if (err) { console.error('Vue load failed:', err); return; }
+    const { createApp } = Vue;
+    const el = document.getElementById('post-editor-app');
+    if (el) createApp(PostEditorApp).mount('#post-editor-app');
+  });
 });
