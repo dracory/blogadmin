@@ -38,6 +38,12 @@ import (
 // are required only for the AI controllers; if nil, AI controllers return
 // an error to the user instead of panicking.
 //
+// AIEnabled gates the AI controllers (ai_tools, ai_test, ai_post_generator,
+// ai_title_generator, ai_post_editor, ai_post_content_update). When false
+// (the default), AI routes are not registered and AI navigation links are
+// hidden. Set to true to enable AI features, and provide LlmFactory,
+// CustomStore, and SettingStore as well.
+//
 // FuncLayout is an optional function to render the admin interface inside
 // your own layout (branding, menus, etc.). If nil, a default bare-bones
 // HTML page is used (Bootstrap + Vue CDN). Uses anonymous struct to match
@@ -62,6 +68,12 @@ type AdminOptions struct {
 	// LlmFactory creates an LLM engine instance. Required for all AI
 	// controllers. Nil means AI controllers return an error to the user.
 	LlmFactory shared.LlmFactoryFunc
+
+	// AIEnabled controls whether AI features are available. When false
+	// (the default), AI routes are not registered and AI navigation
+	// links are hidden. Set to true to enable AI features; you should
+	// also provide LlmFactory, CustomStore, and SettingStore.
+	AIEnabled bool
 
 	// FuncLayout is an optional function to render the admin interface
 	// inside your own layout (branding, menus, etc.). It receives the
@@ -100,6 +112,7 @@ type admin struct {
 	customStore  customstore.StoreInterface
 	settingStore settingstore.StoreInterface
 	llmFactory   shared.LlmFactoryFunc
+	aiEnabled    bool
 	funcLayout   func(w http.ResponseWriter, r *http.Request, title string, body string, options struct {
 		Styles     []string
 		StyleURLs  []string
@@ -115,12 +128,34 @@ type admin struct {
 
 // New creates a new blog admin instance.
 // Returns ErrStoreRequired if Store is nil, ErrLoggerRequired if Logger is nil.
+//
+// When AIEnabled is true, the AI dependencies are also required:
+// ErrAIEnabledMissingLlmFactory if LlmFactory is nil,
+// ErrAIEnabledMissingCustomStore if CustomStore is nil,
+// ErrAIEnabledMissingSettingStore if SettingStore is nil.
+// This makes misconfiguration fail fast at construction instead of
+// surfacing as runtime errors inside individual AI controllers.
 func New(opts AdminOptions) (AdminInterface, error) {
 	if opts.Store == nil {
 		return nil, ErrStoreRequired
 	}
 	if opts.Logger == nil {
 		return nil, ErrLoggerRequired
+	}
+
+	// When AI is enabled, the AI controllers' dependencies must be
+	// present. Failing here gives the integrator a clear, actionable
+	// error instead of a per-request error from each AI controller.
+	if opts.AIEnabled {
+		if opts.LlmFactory == nil {
+			return nil, ErrAIEnabledMissingLlmFactory
+		}
+		if opts.CustomStore == nil {
+			return nil, ErrAIEnabledMissingCustomStore
+		}
+		if opts.SettingStore == nil {
+			return nil, ErrAIEnabledMissingSettingStore
+		}
 	}
 
 	// Set defaults
@@ -137,6 +172,7 @@ func New(opts AdminOptions) (AdminInterface, error) {
 		customStore:    opts.CustomStore,
 		settingStore:   opts.SettingStore,
 		llmFactory:     opts.LlmFactory,
+		aiEnabled:      opts.AIEnabled,
 		funcLayout:     opts.FuncLayout,
 		adminHomeURL:   opts.AdminHomeURL,
 		blogAdminURL:   opts.BlogAdminURL,
@@ -165,6 +201,7 @@ func (a *admin) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, shared.KeyAdminHomeURL, a.adminHomeURL)
 	ctx = context.WithValue(ctx, shared.KeyBlogAdminURL, a.blogAdminURL)
 	ctx = context.WithValue(ctx, shared.KeyFileManagerURL, a.fileManagerURL)
+	ctx = context.WithValue(ctx, shared.KeyAIEnabled, a.aiEnabled)
 	r = r.WithContext(ctx)
 
 	// Map-based route lookup
@@ -182,6 +219,9 @@ func (a *admin) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // buildRoutes creates the handler dispatch map once at construction time.
+// AI controllers are only registered when a.aiEnabled is true; otherwise
+// their routes are omitted so requests for them fall back to the
+// dashboard (matching the existing unknown-controller behavior).
 func (a *admin) buildRoutes() map[string]func(w http.ResponseWriter, r *http.Request) {
 	uiConfig := shared.UiConfig{
 		Store:        a.store,
@@ -189,29 +229,42 @@ func (a *admin) buildRoutes() map[string]func(w http.ResponseWriter, r *http.Req
 		CustomStore:  a.customStore,
 		SettingStore: a.settingStore,
 		LlmFactory:   a.llmFactory,
+		AIEnabled:    a.aiEnabled,
 		Layout:       a.render,
 	}
 
-	return map[string]func(w http.ResponseWriter, r *http.Request){
+	routes := map[string]func(w http.ResponseWriter, r *http.Request){
 		shared.CONTROLLER_DASHBOARD:    func(w http.ResponseWriter, r *http.Request) { dashboard.UI(uiConfig).Dashboard(w, r) },
 		shared.CONTROLLER_POST_MANAGER: func(w http.ResponseWriter, r *http.Request) { post_manager.UI(uiConfig).PostManager(w, r) },
 		shared.CONTROLLER_POST_CREATE:  func(w http.ResponseWriter, r *http.Request) { post_create.UI(uiConfig).PostCreate(w, r) },
 		shared.CONTROLLER_POST_UPDATE: func(w http.ResponseWriter, r *http.Request) {
 			post_update.UI(uiConfig, a.fileManagerURL).PostUpdate(w, r)
 		},
-		shared.CONTROLLER_POST_DELETE:        func(w http.ResponseWriter, r *http.Request) { post_delete.UI(uiConfig).PostDelete(w, r) },
-		shared.CONTROLLER_CATEGORY_MANAGER:   func(w http.ResponseWriter, r *http.Request) { category_manager.UI(uiConfig).CategoryManager(w, r) },
-		shared.CONTROLLER_TAG_MANAGER:        func(w http.ResponseWriter, r *http.Request) { tag_manager.UI(uiConfig).TagManager(w, r) },
-		shared.CONTROLLER_BLOG_SETTINGS:      func(w http.ResponseWriter, r *http.Request) { blog_settings.UI(uiConfig).BlogSettings(w, r) },
-		shared.CONTROLLER_AI_TOOLS:           func(w http.ResponseWriter, r *http.Request) { ai_tools.UI(uiConfig).AiTools(w, r) },
-		shared.CONTROLLER_AI_TEST:            func(w http.ResponseWriter, r *http.Request) { ai_test.UI(uiConfig).AiTest(w, r) },
-		shared.CONTROLLER_AI_POST_GENERATOR:  func(w http.ResponseWriter, r *http.Request) { ai_post_generator.UI(uiConfig).AiPostGenerator(w, r) },
-		shared.CONTROLLER_AI_TITLE_GENERATOR: func(w http.ResponseWriter, r *http.Request) { ai_title_generator.UI(uiConfig).AiTitleGenerator(w, r) },
-		shared.CONTROLLER_AI_POST_EDITOR:     func(w http.ResponseWriter, r *http.Request) { ai_post_editor.UI(uiConfig).AiPostEditor(w, r) },
-		shared.CONTROLLER_AI_POST_CONTENT_UPDATE: func(w http.ResponseWriter, r *http.Request) {
-			ai_post_content_update.UI(uiConfig).AiPostContentUpdate(w, r)
-		},
+		shared.CONTROLLER_POST_DELETE:      func(w http.ResponseWriter, r *http.Request) { post_delete.UI(uiConfig).PostDelete(w, r) },
+		shared.CONTROLLER_CATEGORY_MANAGER: func(w http.ResponseWriter, r *http.Request) { category_manager.UI(uiConfig).CategoryManager(w, r) },
+		shared.CONTROLLER_TAG_MANAGER:      func(w http.ResponseWriter, r *http.Request) { tag_manager.UI(uiConfig).TagManager(w, r) },
+		shared.CONTROLLER_BLOG_SETTINGS:    func(w http.ResponseWriter, r *http.Request) { blog_settings.UI(uiConfig).BlogSettings(w, r) },
 	}
+
+	// Only register AI controllers when AI features are enabled.
+	if a.aiEnabled {
+		routes[shared.CONTROLLER_AI_TOOLS] = func(w http.ResponseWriter, r *http.Request) { ai_tools.UI(uiConfig).AiTools(w, r) }
+		routes[shared.CONTROLLER_AI_TEST] = func(w http.ResponseWriter, r *http.Request) { ai_test.UI(uiConfig).AiTest(w, r) }
+		routes[shared.CONTROLLER_AI_POST_GENERATOR] = func(w http.ResponseWriter, r *http.Request) {
+			ai_post_generator.UI(uiConfig).AiPostGenerator(w, r)
+		}
+		routes[shared.CONTROLLER_AI_TITLE_GENERATOR] = func(w http.ResponseWriter, r *http.Request) {
+			ai_title_generator.UI(uiConfig).AiTitleGenerator(w, r)
+		}
+		routes[shared.CONTROLLER_AI_POST_EDITOR] = func(w http.ResponseWriter, r *http.Request) {
+			ai_post_editor.UI(uiConfig).AiPostEditor(w, r)
+		}
+		routes[shared.CONTROLLER_AI_POST_CONTENT_UPDATE] = func(w http.ResponseWriter, r *http.Request) {
+			ai_post_content_update.UI(uiConfig).AiPostContentUpdate(w, r)
+		}
+	}
+
+	return routes
 }
 
 // render wraps content in the layout. If FuncLayout is provided and

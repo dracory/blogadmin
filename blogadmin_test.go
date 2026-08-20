@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/dracory/blogadmin/testutils"
+	"github.com/dracory/llm"
 	_ "modernc.org/sqlite"
 )
 
@@ -225,6 +226,8 @@ func TestHandle_AiToolsController(t *testing.T) {
 		Logger:       slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		CustomStore:  customStore,
 		SettingStore: settingStore,
+		LlmFactory:   func() (llm.LlmInterface, error) { return nil, nil },
+		AIEnabled:    true,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create admin: %v", err)
@@ -242,6 +245,126 @@ func TestHandle_AiToolsController(t *testing.T) {
 	body := rr.Body.String()
 	if !strings.Contains(body, "BlogAI") {
 		t.Errorf("Expected body to contain 'BlogAI'")
+	}
+}
+
+// TestHandle_AiToolsController_Disabled verifies that when AIEnabled is
+// false (the default), the AI tools route is not registered and requests
+// for it fall back to the dashboard. The body should not contain the
+// AI landing-page marker "BlogAI".
+func TestHandle_AiToolsController_Disabled(t *testing.T) {
+	store, customStore, settingStore, err := testutils.InitStores(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to init stores: %v", err)
+	}
+
+	a, err := New(AdminOptions{
+		Store:        store,
+		Logger:       slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		CustomStore:  customStore,
+		SettingStore: settingStore,
+		// AIEnabled defaults to false; LlmFactory intentionally nil.
+	})
+	if err != nil {
+		t.Fatalf("Failed to create admin: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/blog?controller=ai-tools", nil)
+	rr := httptest.NewRecorder()
+
+	a.Handle(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected status 200 (fallback to dashboard), got %d", rr.Code)
+	}
+
+	body := rr.Body.String()
+	if strings.Contains(body, "BlogAI") {
+		t.Errorf("AI tools page should not render when AI is disabled")
+	}
+	if !strings.Contains(body, "Dashboard") {
+		t.Errorf("Expected fallback to dashboard with 'Dashboard'")
+	}
+}
+
+// TestNew_AIEnabledMissingLlmFactory verifies that enabling AI without
+// an LlmFactory fails fast at construction.
+func TestNew_AIEnabledMissingLlmFactory(t *testing.T) {
+	store, customStore, settingStore, err := testutils.InitStores(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to init stores: %v", err)
+	}
+
+	a, err := New(AdminOptions{
+		Store:        store,
+		Logger:       slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		CustomStore:  customStore,
+		SettingStore: settingStore,
+		AIEnabled:    true,
+		// LlmFactory intentionally nil.
+	})
+	if err == nil {
+		t.Errorf("Expected error when AIEnabled is true but LlmFactory is nil")
+	}
+	if a != nil {
+		t.Errorf("Expected nil admin when AI config is invalid")
+	}
+	if !strings.Contains(err.Error(), ErrAIEnabledMissingLlmFactory.Error()) {
+		t.Errorf("Expected error to contain '%s', got '%s'", ErrAIEnabledMissingLlmFactory.Error(), err.Error())
+	}
+}
+
+// TestNew_AIEnabledMissingCustomStore verifies that enabling AI without
+// a CustomStore fails fast at construction.
+func TestNew_AIEnabledMissingCustomStore(t *testing.T) {
+	store, _, settingStore, err := testutils.InitStores(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to init stores: %v", err)
+	}
+
+	a, err := New(AdminOptions{
+		Store:        store,
+		Logger:       slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		SettingStore: settingStore,
+		LlmFactory:   func() (llm.LlmInterface, error) { return nil, nil },
+		AIEnabled:    true,
+		// CustomStore intentionally nil.
+	})
+	if err == nil {
+		t.Errorf("Expected error when AIEnabled is true but CustomStore is nil")
+	}
+	if a != nil {
+		t.Errorf("Expected nil admin when AI config is invalid")
+	}
+	if !strings.Contains(err.Error(), ErrAIEnabledMissingCustomStore.Error()) {
+		t.Errorf("Expected error to contain '%s', got '%s'", ErrAIEnabledMissingCustomStore.Error(), err.Error())
+	}
+}
+
+// TestNew_AIEnabledMissingSettingStore verifies that enabling AI without
+// a SettingStore fails fast at construction.
+func TestNew_AIEnabledMissingSettingStore(t *testing.T) {
+	store, customStore, _, err := testutils.InitStores(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to init stores: %v", err)
+	}
+
+	a, err := New(AdminOptions{
+		Store:       store,
+		Logger:      slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		CustomStore: customStore,
+		LlmFactory:  func() (llm.LlmInterface, error) { return nil, nil },
+		AIEnabled:   true,
+		// SettingStore intentionally nil.
+	})
+	if err == nil {
+		t.Errorf("Expected error when AIEnabled is true but SettingStore is nil")
+	}
+	if a != nil {
+		t.Errorf("Expected nil admin when AI config is invalid")
+	}
+	if !strings.Contains(err.Error(), ErrAIEnabledMissingSettingStore.Error()) {
+		t.Errorf("Expected error to contain '%s', got '%s'", ErrAIEnabledMissingSettingStore.Error(), err.Error())
 	}
 }
 

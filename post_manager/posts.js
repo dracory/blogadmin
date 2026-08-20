@@ -19,6 +19,9 @@ const BlogPostsApp = {
       showFilterModal: false,
       creating: false,
 
+      // Feature flags (injected from the server via initScript)
+      aiEnabled: (typeof aiEnabled !== 'undefined') ? aiEnabled : false,
+
       // Post data
       posts: [],
       totalPosts: 0,

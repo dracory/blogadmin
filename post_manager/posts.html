@@ -127,6 +127,7 @@
             </td>
             <td>
               <a
+                v-if="aiEnabled"
                 :href="getAiPostContentUrl(post.id)"
                 target="_blank"
                 class="btn btn-warning btn-sm me-2"

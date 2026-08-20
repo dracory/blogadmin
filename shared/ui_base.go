@@ -12,14 +12,15 @@ import (
 
 // UiBase is a base struct that implements shared.UiInterface.
 // Subcontroller ui structs can embed this to get the Store(),
-// Logger(), CustomStore(), SettingStore(), LlmFactory(), and Layout()
-// methods for free, following the shopadmin pattern.
+// Logger(), CustomStore(), SettingStore(), LlmFactory(), AIEnabled(),
+// and Layout() methods for free, following the shopadmin pattern.
 type UiBase struct {
 	StoreField        blogstore.StoreInterface
 	LoggerField       *slog.Logger
 	CustomStoreField  customstore.StoreInterface
 	SettingStoreField settingstore.StoreInterface
 	LlmFactoryField   LlmFactoryFunc
+	AIEnabledField    bool
 	LayoutField       func(w http.ResponseWriter, r *http.Request, webpageTitle, webpageHtml string, options struct {
 		Styles     []string
 		StyleURLs  []string
@@ -28,11 +29,12 @@ type UiBase struct {
 	}) string
 }
 
-func (u UiBase) Store() blogstore.StoreInterface { return u.StoreField }
-func (u UiBase) Logger() *slog.Logger            { return u.LoggerField }
-func (u UiBase) CustomStore() customstore.StoreInterface { return u.CustomStoreField }
+func (u UiBase) Store() blogstore.StoreInterface           { return u.StoreField }
+func (u UiBase) Logger() *slog.Logger                      { return u.LoggerField }
+func (u UiBase) CustomStore() customstore.StoreInterface   { return u.CustomStoreField }
 func (u UiBase) SettingStore() settingstore.StoreInterface { return u.SettingStoreField }
-func (u UiBase) LlmFactory() LlmFactoryFunc { return u.LlmFactoryField }
+func (u UiBase) LlmFactory() LlmFactoryFunc                { return u.LlmFactoryField }
+func (u UiBase) AIEnabled() bool                           { return u.AIEnabledField }
 
 func (u UiBase) LlmEngine() (llm.LlmInterface, error) {
 	if u.LlmFactoryField == nil {
@@ -58,6 +60,7 @@ func NewUiBase(config UiConfig) UiBase {
 		CustomStoreField:  config.CustomStore,
 		SettingStoreField: config.SettingStore,
 		LlmFactoryField:   config.LlmFactory,
+		AIEnabledField:    config.AIEnabled,
 		LayoutField:       config.Layout,
 	}
 }

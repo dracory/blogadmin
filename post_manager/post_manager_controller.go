@@ -97,21 +97,27 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	actionButtons := hb.Div().
 		Class("d-flex gap-2 float-end")
 
-	buttonAiHome := hb.Hyperlink().
-		Class("btn btn-light text-dark d-inline-flex align-items-center").
-		Child(hb.I().Class("bi bi-stars me-2")).
-		HTML("AI Tools").
-		Href(linksHelper.AiTools(nil))
-
 	buttonSettings := hb.Hyperlink().
 		Class("btn btn-outline-secondary d-inline-flex align-items-center").
 		Child(hb.I().Class("bi bi-gear me-2")).
 		HTML("Settings").
 		Href(linksHelper.BlogSettings(nil))
 
-	actionButtons = actionButtons.
-		Child(buttonAiHome).
-		Child(buttonSettings)
+	actionButtons = actionButtons.Child(buttonSettings)
+
+	// Only show the AI Tools button when AI features are enabled.
+	if u.AIEnabled() {
+		buttonAiHome := hb.Hyperlink().
+			Class("btn btn-light text-dark d-inline-flex align-items-center").
+			Child(hb.I().Class("bi bi-stars me-2")).
+			HTML("AI Tools").
+			Href(linksHelper.AiTools(nil))
+		// Prepend so AI Tools sits to the left of Settings.
+		actionButtons = hb.Div().
+			Class("d-flex gap-2 float-end").
+			Child(buttonAiHome).
+			Child(buttonSettings)
+	}
 
 	heading := hb.Heading1().HTML("Blog. Post Manager").Child(actionButtons)
 
@@ -129,7 +135,15 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 
 	vueCDN := hb.Script("").Src(cdn.VueJs_3_5_32())
 
+	// aiEnabledJS exposes the AI-enabled flag to the Vue app so it can
+	// hide the per-row AI Content Editor button when AI is disabled.
+	aiEnabledJS := "false"
+	if u.AIEnabled() {
+		aiEnabledJS = "true"
+	}
+
 	initScript := hb.Script(`
+		const aiEnabled = ` + aiEnabledJS + `;
 		const urlPostsLoad = '` + linksHelper.PostManager(map[string]string{"action": actionLoadPosts}) + `';
 		const urlPostDelete = '` + linksHelper.PostManager(map[string]string{"action": actionDeletePost}) + `';
 		const urlPostCreate = '` + linksHelper.PostManager(map[string]string{"action": actionCreatePost}) + `';

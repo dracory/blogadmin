@@ -24,16 +24,21 @@ type LlmFactoryFunc func() (llm.LlmInterface, error)
 // cmsstore/admin and shopadmin exactly, allowing consumers to reuse
 // their existing layout function for blogadmin.
 //
-// AI controllers require CustomStore, SettingStore, and LlmFactory.
-// Core controllers only need Store and Logger. Nil AI dependencies are
-// safe — AI controllers return an error to the user instead of panicking.
+// AI controllers require CustomStore, SettingStore, and LlmFactory, and
+// are only registered when AIEnabled is true. Core controllers only need
+// Store and Logger. Nil AI dependencies are safe — AI controllers return
+// an error to the user instead of panicking.
 type UiConfig struct {
 	Store        blogstore.StoreInterface
 	Logger       *slog.Logger
 	CustomStore  customstore.StoreInterface
 	SettingStore settingstore.StoreInterface
 	LlmFactory   LlmFactoryFunc
-	Layout       func(w http.ResponseWriter, r *http.Request, webpageTitle, webpageHtml string, options struct {
+	// AIEnabled gates registration of AI controllers and visibility of
+	// AI navigation links. When false, AI routes are not registered and
+	// AI links are hidden in the UI.
+	AIEnabled bool
+	Layout    func(w http.ResponseWriter, r *http.Request, webpageTitle, webpageHtml string, options struct {
 		Styles     []string
 		StyleURLs  []string
 		Scripts    []string

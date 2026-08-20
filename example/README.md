@@ -11,6 +11,34 @@ go run ./example
 
 Then open http://localhost:8080/ in your browser.
 
+## Hot reload (recommended for development)
+
+The repo includes a [`taskfile.yml`](../taskfile.yml) and [`.air.toml`](../.air.toml)
+for hot-reload development with [Air](https://github.com/air-verse/air)
+and [Task](https://taskfile.dev).
+
+Install the tools once:
+
+```bash
+# Install task:  https://taskfile.dev/installation/
+# Install air:
+task air:install
+```
+
+Then start the example with hot reload:
+
+```bash
+task dev          # AI disabled (default)
+task dev:ai       # AI enabled (requires OPENAI_API_KEY)
+```
+
+Or use Air directly:
+
+```bash
+air               # AI disabled
+BLOGADMIN_AI_ENABLED=true air   # AI enabled
+```
+
 ## What it does
 
 - Creates an in-memory SQLite database (reset on every restart)
@@ -22,27 +50,20 @@ Then open http://localhost:8080/ in your browser.
 
 ## AI features
 
-AI controllers (title generator, post generator, post editor) require
-an LLM factory. This example leaves `LlmFactory` as `nil`, so AI
-controllers return an error to the user instead of making API calls.
-To enable AI features, provide a real `LlmFactoryFunc`:
+AI features are **opt-in** and disabled by default. To enable them,
+set `BLOGADMIN_AI_ENABLED=true` (or `1`) and provide an OpenAI API key
+via `OPENAI_API_KEY`:
 
-```go
-admin, err := blogadmin.New(blogadmin.AdminOptions{
-    Store:        store,
-    Logger:       logger,
-    CustomStore:  customStore,
-    SettingStore: settingStore,
-    LlmFactory: func() (llm.LlmInterface, error) {
-        return llm.NewLlm(llm.LlmOptions{
-            Provider: llm.PROVIDER_OPENAI,
-            ApiKey:   os.Getenv("OPENAI_API_KEY"),
-            Model:    "gpt-4o",
-        })
-    },
-    // ...
-})
+```bash
+BLOGADMIN_AI_ENABLED=true OPENAI_API_KEY=sk-... go run ./example
 ```
+
+Optional: `OPENAI_MODEL` selects the model (default `gpt-4o`).
+
+When enabled, the example wires up a real `LlmFactoryFunc` using
+`llm.NewLLM` with `llm.ProviderOpenAI`, and passes `AIEnabled: true`
+to `blogadmin.New`. When disabled, AI routes are not registered and
+AI navigation links are hidden — no API key is required.
 
 ## Persistence
 

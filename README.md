@@ -124,8 +124,14 @@ route := rtr.NewRoute().
 
 ## AI Features
 
-AI controllers (title generator, post generator, post editor) require
-an LLM factory. Provide one via `LlmFactory`:
+AI controllers (title generator, post generator, post editor) are
+**opt-in**. They are only registered when `AIEnabled` is `true`, and
+their navigation links are hidden otherwise.
+
+When `AIEnabled` is `true`, `LlmFactory`, `CustomStore`, and
+`SettingStore` are all required — `New` fails fast with a descriptive
+error if any is missing, so misconfiguration is caught at startup
+rather than surfacing as per-request errors.
 
 ```go
 admin, _ := blogadmin.New(blogadmin.AdminOptions{
@@ -133,9 +139,10 @@ admin, _ := blogadmin.New(blogadmin.AdminOptions{
     Logger:       logger,
     CustomStore:  customStore,
     SettingStore: settingStore,
+    AIEnabled:    true,
     LlmFactory: func() (llm.LlmInterface, error) {
-        return llm.NewLlm(llm.LlmOptions{
-            Provider: llm.PROVIDER_OPENAI,
+        return llm.NewLLM(llm.LlmOptions{
+            Provider: llm.ProviderOpenAI,
             ApiKey:   os.Getenv("OPENAI_API_KEY"),
             Model:    "gpt-4o",
         })
@@ -143,9 +150,9 @@ admin, _ := blogadmin.New(blogadmin.AdminOptions{
 })
 ```
 
-If `LlmFactory` is nil, AI controllers return an error to the user
-instead of panicking. `CustomStore` and `SettingStore` are also
-required for AI controllers — nil means they return an error.
+If `AIEnabled` is `false` (the default), AI routes are not registered
+and AI navigation links are hidden — no LLM factory or AI stores are
+required.
 
 ## Custom Layout
 
