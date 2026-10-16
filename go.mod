@@ -6,7 +6,7 @@ require (
 	github.com/aws/smithy-go v1.28.5
 	github.com/dracory/api v1.8.0
 	github.com/dracory/base v0.42.3
-	github.com/dracory/blogstore v1.37.0
+	github.com/dracory/blogstore v1.38.0
 	github.com/dracory/bs v0.16.0
 	github.com/dracory/cdn v1.13.0
 	github.com/dracory/customstore v1.16.0
@@ -76,7 +76,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-	modernc.org/libc v1.78.0 // indirect
+	modernc.org/libc v1.79.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 )
