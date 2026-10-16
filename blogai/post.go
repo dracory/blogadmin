@@ -222,12 +222,12 @@ func NewRecordPostFromCustomRecord(record customstore.RecordInterface) (RecordPo
 		return RecordPost{}, errors.New("record is required")
 	}
 
-	payloadMap, err := record.PayloadMap()
+	payloadMap, err := record.GetPayloadMap()
 	if err != nil {
 		return RecordPost{}, err
 	}
 
-	payloadMap["id"] = record.ID()
+	payloadMap["id"] = record.GetID()
 	return newRecordPostFromMap(payloadMap)
 }
 

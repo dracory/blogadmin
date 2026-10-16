@@ -2,10 +2,10 @@ package ai_post_content_update
 
 import (
 	"strings"
+	"uuid"
 
 	"github.com/dracory/blogadmin/blogai"
 
-	"github.com/dracory/uid"
 	"github.com/samber/lo"
 )
 
@@ -53,7 +53,7 @@ func MarkdownToBlocks(markdown string) []Block {
 		}
 		text := normalizeParagraph(strings.Join(paraBuf, "\n"))
 		if strings.TrimSpace(text) != "" {
-			blocks = append(blocks, Block{ID: uid.HumanUid(), Type: BlockParagraph, Text: text})
+			blocks = append(blocks, Block{ID: uuid.NewV7().String(), Type: BlockParagraph, Text: text})
 		}
 		paraBuf = nil
 	}
@@ -64,7 +64,7 @@ func MarkdownToBlocks(markdown string) []Block {
 			return
 		}
 		text := strings.Join(codeBuf, "\n")
-		blocks = append(blocks, Block{ID: uid.HumanUid(), Type: BlockCode, Text: text})
+		blocks = append(blocks, Block{ID: uuid.NewV7().String(), Type: BlockCode, Text: text})
 		codeBuf = nil
 	}
 
@@ -103,14 +103,14 @@ func MarkdownToBlocks(markdown string) []Block {
 		if strings.HasPrefix(trimmed, "# ") {
 			flushParagraph()
 			text := strings.TrimSpace(trimmed[2:])
-			blocks = append(blocks, Block{ID: uid.HumanUid(), Type: BlockHeader1, Text: text})
+			blocks = append(blocks, Block{ID: uuid.NewV7().String(), Type: BlockHeader1, Text: text})
 			continue
 		}
 
 		if headingLevel(trimmed) >= 2 {
 			flushParagraph()
 			sectionTitle := strings.TrimSpace(trimmed[headingPrefixLength(trimmed):])
-			blocks = append(blocks, Block{ID: uid.HumanUid(), Type: BlockHeader2, Text: sectionTitle})
+			blocks = append(blocks, Block{ID: uuid.NewV7().String(), Type: BlockHeader2, Text: sectionTitle})
 			continue
 		}
 

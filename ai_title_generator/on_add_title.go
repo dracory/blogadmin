@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/customstore"
 	"github.com/dracory/hb"
 	"github.com/dracory/req"
@@ -21,7 +21,7 @@ func (u *ui) onAddTitle(r *http.Request) string {
 	record := customstore.NewRecord(blogai.POST_RECORD_TYPE)
 	now := time.Now().UTC().Format(time.RFC3339)
 	if err := record.SetPayloadMap(map[string]any{
-		"id":         record.ID(),
+		"id":         record.GetID(),
 		"title":      customTitle,
 		"status":     blogai.POST_STATUS_PENDING,
 		"created_at": now,

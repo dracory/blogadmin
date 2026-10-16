@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogstore"
 	"github.com/dracory/customstore"
 	"github.com/dracory/wf"
@@ -170,7 +170,7 @@ func (u *ui) stepHandlerSaveTitles(ctx context.Context, data map[string]any) (co
 
 	for _, title := range titles {
 		record := customstore.NewRecord(blogai.POST_RECORD_TYPE)
-		recordID := record.ID()
+		recordID := record.GetID()
 
 		record.SetPayloadMap(map[string]interface{}{
 			"id":         recordID,

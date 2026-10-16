@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"uuid"
 
 	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogstore"
 	"github.com/dracory/cdn"
 	"github.com/dracory/hb"
-	"github.com/dracory/uid"
 )
 
 // UiInterface defines the dashboard controller's UI interface
@@ -345,7 +345,7 @@ func (u *ui) ensureTaxonomies(ctx context.Context, store blogstore.StoreInterfac
 	if err != nil {
 		u.Logger().Info("Creating category taxonomy")
 		taxonomy := blogstore.NewTaxonomy()
-		taxonomy.SetID(uid.HumanUid()[:8])
+		taxonomy.SetID(uuid.NewV7().String())
 		taxonomy.SetName("Category")
 		taxonomy.SetSlug(blogstore.TAXONOMY_CATEGORY)
 		taxonomy.SetDescription("Blog post categories")
@@ -359,7 +359,7 @@ func (u *ui) ensureTaxonomies(ctx context.Context, store blogstore.StoreInterfac
 	if err != nil {
 		u.Logger().Info("Creating tag taxonomy")
 		taxonomy := blogstore.NewTaxonomy()
-		taxonomy.SetID(uid.HumanUid()[:8])
+		taxonomy.SetID(uuid.NewV7().String())
 		taxonomy.SetName("Tag")
 		taxonomy.SetSlug(blogstore.TAXONOMY_TAG)
 		taxonomy.SetDescription("Blog post tags")

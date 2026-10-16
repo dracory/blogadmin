@@ -203,8 +203,8 @@ func (u *ui) prepareDataAndValidate(r *http.Request) (pageData, string) {
 		return data, "Post record not found"
 	}
 
-	if data.Record.Type() != blogai.POST_RECORD_TYPE {
-		u.Logger().Error("BlogAi. Post Editor. Prepare Data. Invalid record type", slog.String("record_type", data.Record.Type()), slog.String("record_id", recordPostID))
+	if data.Record.GetType() != blogai.POST_RECORD_TYPE {
+		u.Logger().Error("BlogAi. Post Editor. Prepare Data. Invalid record type", slog.String("record_type", data.Record.GetType()), slog.String("record_id", recordPostID))
 		return data, "Invalid record type"
 	}
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"uuid"
 
 	"github.com/dracory/api"
 	"github.com/dracory/blogadmin/shared"
@@ -13,7 +14,6 @@ import (
 	"github.com/dracory/cdn"
 	"github.com/dracory/hb"
 	"github.com/dracory/str"
-	"github.com/dracory/uid"
 )
 
 //go:embed *.html
@@ -249,7 +249,7 @@ func (u *ui) handleCreateTag(w http.ResponseWriter, r *http.Request) string {
 	}
 
 	term := blogstore.NewTerm()
-	term.SetID(uid.HumanUid()[:8])
+	term.SetID(uuid.NewV7().String())
 	term.SetName(reqData.Name)
 	term.SetSlug(slug)
 	term.SetTaxonomyID(tagTaxonomy.GetID())
