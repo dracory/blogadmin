@@ -12,7 +12,7 @@ require (
 	github.com/dracory/customstore v1.16.0
 	github.com/dracory/hb v1.88.0
 	github.com/dracory/llm v1.9.0
-	github.com/dracory/neat v0.57.0
+	github.com/dracory/neat v0.60.0
 	github.com/dracory/req v0.1.0
 	github.com/dracory/settingstore v1.13.0
 	github.com/dracory/str v0.19.0
