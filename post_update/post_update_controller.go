@@ -182,35 +182,31 @@ func (u *ui) page(r *http.Request, post blogstore.PostInterface, view string) hb
 		},
 		{
 			Name: "Edit Post",
-			URL:  linksHelper.PostUpdate(map[string]string{"post_id": post.GetID()}),
+			URL:  "",
 		},
 	})
 
 	buttonCancel := hb.Hyperlink().
-		Class("btn btn-secondary ms-2 float-end").
-		Child(hb.I().Class("bi bi-chevron-left").Style("margin-top:-4px;margin-right:8px;font-size:16px;")).
+		Class("btn btn-outline-secondary btn-sm").
+		Child(hb.I().Class("bi bi-chevron-left me-1")).
 		HTML("Back").
 		Href(shared.URLR(r, shared.CONTROLLER_DASHBOARD, nil))
 
 	buttonView := hb.Hyperlink().
-		Class("btn btn-info ms-2 float-end").
-		Child(hb.I().Class("bi bi-eye").Style("margin-top:-4px;margin-right:8px;font-size:16px;")).
+		Class("btn btn-info btn-sm").
+		Child(hb.I().Class("bi bi-eye me-1")).
 		HTML("View").
 		Href("/blog/post/"+post.GetID()+"/"+post.GetSlug()).
 		Attr("target", "_blank")
 
 	buttonVersionHistory := hb.Button().
-		Class("btn btn-primary ms-2 float-end").
-		Child(hb.I().Class("bi bi-clock-history").Style("margin-top:-4px;margin-right:8px;font-size:16px;")).
+		Class("btn btn-primary btn-sm").
+		Child(hb.I().Class("bi bi-clock-history me-1")).
 		HTML("Version History").
 		Attr("data-bs-toggle", "modal").
 		Attr("data-bs-target", "#versionHistoryModal")
 
-	heading := hb.Heading1().
-		HTML("Edit Post").
-		Child(buttonCancel).
-		Child(buttonView).
-		Child(buttonVersionHistory)
+	heading := shared.PageHeader("Edit Post", buttonVersionHistory, buttonView, buttonCancel)
 
 	tabs := bs.NavTabs().
 		Class("mb-3").
@@ -310,9 +306,9 @@ func (u *ui) page(r *http.Request, post blogstore.PostInterface, view string) hb
 	versioningModal := u.renderVersioningModal(r, post)
 
 	return hb.Div().
-		Class("container").
-		Child(heading).
+		Class("container py-4").
 		Child(breadcrumbs).
+		Child(heading).
 		Child(postTitle).
 		Child(tabs).
 		Child(card).

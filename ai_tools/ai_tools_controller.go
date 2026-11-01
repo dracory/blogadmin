@@ -167,5 +167,6 @@ func (u *ui) view(r *http.Request) hb.TagInterface {
 		Class("container").
 		Class("min-vh-100 py-4").
 		Child(breadcrumbs).
+		Child(shared.PageHeader("AI Tools")).
 		Child(card)
 }

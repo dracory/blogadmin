@@ -40,13 +40,11 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	breadcrumbs := shared.Breadcrumbs([]shared.Breadcrumb{
 		{Name: "Dashboard", URL: shared.AdminHomeURL(r)},
 		{Name: "Blog", URL: shared.URLR(r, shared.CONTROLLER_DASHBOARD, nil)},
-		{Name: "Settings", URL: shared.URLR(r, shared.CONTROLLER_BLOG_SETTINGS, nil)},
+		{Name: "Settings", URL: ""},
 	})
 
-	heading := hb.Heading1().HTML("Blog Settings")
-
 	buttonBack := hb.Hyperlink().
-		Class("btn btn-secondary ms-3").
+		Class("btn btn-outline-secondary btn-sm").
 		HTML("Back to Blog").
 		Href(linksHelper.Home(nil))
 
@@ -64,10 +62,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	page := hb.Div().
 		Class("container py-4 min-vh-100").
 		Child(breadcrumbs).
-		Child(hb.Div().
-			Class("d-flex align-items-center mb-4").
-			Child(heading).
-			Child(buttonBack)).
+		Child(shared.PageHeader("Blog Settings", buttonBack)).
 		Child(card)
 
 	return u.Layout(w, r, "Settings | Blog", page.ToHTML(), struct {

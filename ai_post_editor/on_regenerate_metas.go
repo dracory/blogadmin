@@ -3,8 +3,8 @@ package ai_post_editor
 import (
 	"strings"
 
-	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
+	"github.com/dracory/blogadmin/blogai"
 )
 
 func (u *ui) onRegenerateMetas(data pageData) string {

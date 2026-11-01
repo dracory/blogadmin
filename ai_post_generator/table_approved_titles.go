@@ -3,8 +3,8 @@ package ai_post_generator
 import (
 	"net/http"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/hb"
 	"github.com/samber/lo"
 )

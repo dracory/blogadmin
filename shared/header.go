@@ -58,7 +58,7 @@ func Header(store blogstore.StoreInterface, logger *slog.Logger, r *http.Request
 	}
 
 	ulNav := hb.NewUL().
-		Class("nav  nav-pills justify-content-center").
+		Class("nav nav-tabs mb-3").
 		Child(hb.NewLI().
 			Class("nav-item").Child(linkHome)).
 		Child(hb.NewLI().
@@ -102,7 +102,5 @@ func Header(store blogstore.StoreInterface, logger *slog.Logger, r *http.Request
 			Child(linkFileManager))
 	}
 
-	divCard := hb.NewDiv().Class("card card-default mt-3 mb-3")
-	divCardBody := hb.NewDiv().Class("card-body").Style("padding: 2px;")
-	return divCard.AddChild(divCardBody.AddChild(ulNav))
+	return ulNav
 }

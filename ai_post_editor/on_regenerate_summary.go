@@ -1,8 +1,8 @@
 package ai_post_editor
 
 import (
-	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
+	"github.com/dracory/blogadmin/blogai"
 )
 
 func (u *ui) onRegenerateSummary(data pageData) string {

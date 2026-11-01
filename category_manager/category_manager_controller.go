@@ -71,7 +71,7 @@ func (u *ui) renderPage(r *http.Request) string {
 		{Name: "Categories", URL: ""},
 	})
 
-	heading := hb.Heading1().HTML("Blog. Category Manager")
+	heading := shared.PageHeader("Category Manager")
 
 	htmlContent, err := categoriesFiles.ReadFile("categories.html")
 	if err != nil {
@@ -107,10 +107,9 @@ func (u *ui) renderPage(r *http.Request) string {
 		Child(componentScript)
 
 	content := hb.Div().
-		Class("container").
-		Child(heading).
+		Class("container py-4").
 		Child(breadcrumbs).
-		Child(hb.HR()).
+		Child(heading).
 		Child(vueContainer)
 
 	return u.Layout(nil, r, "Blog | Category Manager", content.ToHTML(), struct {

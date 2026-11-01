@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/api"
+	"github.com/dracory/blogadmin/shared"
 )
 
 func (u *ui) handleSettingsSubmit(r *http.Request) string {

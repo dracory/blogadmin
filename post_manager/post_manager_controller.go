@@ -94,32 +94,26 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 
 	linksHelper := shared.NewLinksFromRequest(r)
 
-	actionButtons := hb.Div().
-		Class("d-flex gap-2 float-end")
-
 	buttonSettings := hb.Hyperlink().
-		Class("btn btn-outline-secondary d-inline-flex align-items-center").
+		Class("btn btn-outline-secondary btn-sm d-inline-flex align-items-center").
 		Child(hb.I().Class("bi bi-gear me-2")).
 		HTML("Settings").
 		Href(linksHelper.BlogSettings(nil))
 
-	actionButtons = actionButtons.Child(buttonSettings)
+	var actions []hb.TagInterface
 
 	// Only show the AI Tools button when AI features are enabled.
 	if u.AIEnabled() {
 		buttonAiHome := hb.Hyperlink().
-			Class("btn btn-light text-dark d-inline-flex align-items-center").
+			Class("btn btn-light text-dark btn-sm d-inline-flex align-items-center").
 			Child(hb.I().Class("bi bi-stars me-2")).
 			HTML("AI Tools").
 			Href(linksHelper.AiTools(nil))
-		// Prepend so AI Tools sits to the left of Settings.
-		actionButtons = hb.Div().
-			Class("d-flex gap-2 float-end").
-			Child(buttonAiHome).
-			Child(buttonSettings)
+		actions = append(actions, buttonAiHome)
 	}
+	actions = append(actions, buttonSettings)
 
-	heading := hb.Heading1().HTML("Blog. Post Manager").Child(actionButtons)
+	heading := shared.PageHeader("Post Manager", actions...)
 
 	htmlContent, err := postsFiles.ReadFile("posts.html")
 	if err != nil {
@@ -159,10 +153,9 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 		Child(componentScript)
 
 	content := hb.Div().
-		Class("container").
-		Child(heading).
+		Class("container py-4").
 		Child(breadcrumbs).
-		Child(hb.HR()).
+		Child(heading).
 		Child(vueContainer)
 
 	return u.Layout(w, r, "Blog | Post Manager", content.ToHTML(), struct {

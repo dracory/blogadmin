@@ -3,8 +3,8 @@ package ai_post_editor
 import (
 	"log/slog"
 
-	"github.com/dracory/blogadmin/blogai"
 	"github.com/dracory/api"
+	"github.com/dracory/blogadmin/blogai"
 )
 
 func (u *ui) onRegenerateImage(data pageData) string {

@@ -72,7 +72,7 @@ func (u *ui) renderPage(r *http.Request) string {
 		{Name: "Tags", URL: ""},
 	})
 
-	heading := hb.Heading1().HTML("Blog. Tag Manager")
+	heading := shared.PageHeader("Tag Manager")
 
 	htmlContent, err := tagsFiles.ReadFile("tags.html")
 	if err != nil {
@@ -105,10 +105,9 @@ func (u *ui) renderPage(r *http.Request) string {
 		Child(componentScript)
 
 	content := hb.Div().
-		Class("container").
-		Child(heading).
+		Class("container py-4").
 		Child(breadcrumbs).
-		Child(hb.HR()).
+		Child(heading).
 		Child(vueContainer)
 
 	return u.Layout(nil, r, "Blog | Tag Manager", content.ToHTML(), struct {

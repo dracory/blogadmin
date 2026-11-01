@@ -79,19 +79,15 @@ func (u *ui) page(r *http.Request, data dashboardControllerData) hb.TagInterface
 	// Add navigation tabs like CMS
 	navTabs := u.navTabs(r, data)
 
-	title := hb.Heading1().
-		HTML("Blog. Dashboard")
-
 	content := hb.Wrap().
 		Child(navTabs).
-		Child(hb.BR()).
 		Child(u.dashboardCards(r, data))
 
 	return hb.Div().
 		Class("container").
 		Class("py-4").
-		Child(title).
 		Child(breadcrumbs).
+		Child(shared.PageHeader("Dashboard")).
 		Child(content)
 }
 

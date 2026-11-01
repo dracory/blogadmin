@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/blogadmin/blogai"
+	"github.com/dracory/blogadmin/shared"
 	"github.com/dracory/cdn"
 	"github.com/dracory/customstore"
 	"github.com/dracory/hb"
@@ -118,6 +118,7 @@ func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 		Class("container").
 		Class("min-vh-100 py-4").
 		Child(breadcrumbs).
+		Child(shared.PageHeader("Post Generator")).
 		Child(card)
 }
 

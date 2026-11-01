@@ -125,7 +125,7 @@ func (u *ui) buildPostMarkdownContent(_ *http.Request, record *blogai.RecordPost
 func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 	linksHelper := shared.NewLinksFromRequest(r)
 
-	header := hb.Heading1().HTML("Edit Blog Post")
+	header := shared.PageHeader("Edit Blog Post")
 
 	breadcrumbs := shared.Breadcrumbs([]shared.Breadcrumb{
 		{
