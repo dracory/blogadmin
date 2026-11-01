@@ -152,10 +152,13 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 		Child(initScript).
 		Child(componentScript)
 
+	header := shared.Header(u.Store(), u.Logger(), r)
+
 	content := hb.Div().
 		Class("container py-4").
 		Child(breadcrumbs).
 		Child(heading).
+		Child(header).
 		Child(vueContainer)
 
 	return u.Layout(w, r, "Blog | Post Manager", content.ToHTML(), struct {
