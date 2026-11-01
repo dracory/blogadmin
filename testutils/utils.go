@@ -33,16 +33,16 @@ func InitStores(filepath string) (blogstore.StoreInterface, customstore.StoreInt
 	}
 
 	blogStore, err := blogstore.NewStore(blogstore.NewStoreOptions{
-		DB:                     db,
-		PostTableName:          "blog_post",
-		TaxonomyTableName:      "blog_taxonomy",
-		TermTableName:          "blog_term",
-		TermRelationTableName:  "blog_term_rel",
-		MediaTableName:         "blog_media",
-		VersioningEnabled:      true,
-		VersioningTableName:    "blog_version",
-		TaxonomyEnabled:        true,
-		AutomigrateEnabled:     true,
+		DB:                    db,
+		PostTableName:         "blog_post",
+		TaxonomyTableName:     "blog_taxonomy",
+		TermTableName:         "blog_term",
+		TermRelationTableName: "blog_term_rel",
+		MediaTableName:        "blog_media",
+		VersioningEnabled:     true,
+		VersioningTableName:   "blog_version",
+		TaxonomyEnabled:       true,
+		AutomigrateEnabled:    true,
 	})
 	if err != nil {
 		return nil, nil, nil, err
@@ -79,16 +79,16 @@ func InitBlogStore(filepath string) (blogstore.StoreInterface, error) {
 	}
 
 	return blogstore.NewStore(blogstore.NewStoreOptions{
-		DB:                     db,
-		PostTableName:          "blog_post",
-		TaxonomyTableName:      "blog_taxonomy",
-		TermTableName:          "blog_term",
-		TermRelationTableName:  "blog_term_rel",
-		MediaTableName:         "blog_media",
-		VersioningEnabled:      true,
-		VersioningTableName:    "blog_version",
-		TaxonomyEnabled:        true,
-		AutomigrateEnabled:     true,
+		DB:                    db,
+		PostTableName:         "blog_post",
+		TaxonomyTableName:     "blog_taxonomy",
+		TermTableName:         "blog_term",
+		TermRelationTableName: "blog_term_rel",
+		MediaTableName:        "blog_media",
+		VersioningEnabled:     true,
+		VersioningTableName:   "blog_version",
+		TaxonomyEnabled:       true,
+		AutomigrateEnabled:    true,
 	})
 }
 

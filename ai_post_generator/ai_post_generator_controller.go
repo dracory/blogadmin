@@ -118,7 +118,7 @@ func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 		Class("container").
 		Class("min-vh-100 py-4").
 		Child(breadcrumbs).
-		Child(shared.PageHeader("Post Generator")).
+		Child(shared.PageHeader("Blog. Post Generator")).
 		Child(card)
 }
 

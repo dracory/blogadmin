@@ -87,7 +87,7 @@ func (u *ui) page(r *http.Request, data dashboardControllerData) hb.TagInterface
 		Class("container").
 		Class("py-4").
 		Child(breadcrumbs).
-		Child(shared.PageHeader("Dashboard")).
+		Child(shared.PageHeader("Blog. Dashboard")).
 		Child(content)
 }
 

@@ -71,7 +71,7 @@ func (u *ui) renderPage(r *http.Request) string {
 		{Name: "Categories", URL: ""},
 	})
 
-	heading := shared.PageHeader("Category Manager")
+	heading := shared.PageHeader("Blog. Category Manager")
 
 	htmlContent, err := categoriesFiles.ReadFile("categories.html")
 	if err != nil {

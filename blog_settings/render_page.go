@@ -62,7 +62,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	page := hb.Div().
 		Class("container py-4 min-vh-100").
 		Child(breadcrumbs).
-		Child(shared.PageHeader("Blog Settings", buttonBack)).
+		Child(shared.PageHeader("Blog. Settings", buttonBack)).
 		Child(card)
 
 	return u.Layout(w, r, "Settings | Blog", page.ToHTML(), struct {

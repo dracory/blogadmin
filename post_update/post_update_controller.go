@@ -206,7 +206,7 @@ func (u *ui) page(r *http.Request, post blogstore.PostInterface, view string) hb
 		Attr("data-bs-toggle", "modal").
 		Attr("data-bs-target", "#versionHistoryModal")
 
-	heading := shared.PageHeader("Edit Post", buttonVersionHistory, buttonView, buttonCancel)
+	heading := shared.PageHeader("Blog. Edit Post", buttonVersionHistory, buttonView, buttonCancel)
 
 	tabs := bs.NavTabs().
 		Class("mb-3").

@@ -72,7 +72,7 @@ func (u *ui) renderPage(r *http.Request) string {
 		{Name: "Tags", URL: ""},
 	})
 
-	heading := shared.PageHeader("Tag Manager")
+	heading := shared.PageHeader("Blog. Tag Manager")
 
 	htmlContent, err := tagsFiles.ReadFile("tags.html")
 	if err != nil {

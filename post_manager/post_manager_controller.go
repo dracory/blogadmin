@@ -113,7 +113,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	}
 	actions = append(actions, buttonSettings)
 
-	heading := shared.PageHeader("Post Manager", actions...)
+	heading := shared.PageHeader("Blog. Post Manager", actions...)
 
 	htmlContent, err := postsFiles.ReadFile("posts.html")
 	if err != nil {
