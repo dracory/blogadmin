@@ -4,6 +4,7 @@ go 1.27.0
 
 require (
 	github.com/aws/smithy-go v1.28.7
+	github.com/chromedp/chromedp v0.14.2
 	github.com/dracory/api v1.8.0
 	github.com/dracory/base v0.42.3
 	github.com/dracory/blogstore v1.39.1
@@ -36,12 +37,18 @@ require (
 	cloud.google.com/go/longrunning v1.4.1 // indirect
 	cloud.google.com/go/vertexai v0.19.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/chromedp/cdproto v0.0.0-20250724212937-08a3db8b4327 // indirect
+	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/dracory/arr v0.2.0 // indirect
 	github.com/dracory/uid v1.14.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20250725192818-e39067aee2d2 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/google/uuid v1.6.0 // indirect
