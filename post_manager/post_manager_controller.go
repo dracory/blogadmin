@@ -156,9 +156,9 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 
 	content := hb.Div().
 		Class("container py-4").
+		Child(header).
 		Child(breadcrumbs).
 		Child(heading).
-		Child(header).
 		Child(vueContainer)
 
 	return u.Layout(w, r, "Blog | Post Manager", content.ToHTML(), struct {

@@ -76,80 +76,16 @@ func (u *ui) page(r *http.Request, data dashboardControllerData) hb.TagInterface
 		},
 	})
 
-	// Add navigation tabs like CMS
-	navTabs := u.navTabs(r, data)
-
 	content := hb.Wrap().
-		Child(navTabs).
 		Child(u.dashboardCards(r, data))
 
 	return hb.Div().
 		Class("container").
 		Class("py-4").
+		Child(shared.Header(u.Store(), u.Logger(), r)).
 		Child(breadcrumbs).
 		Child(shared.PageHeader("Blog. Dashboard")).
 		Child(content)
-}
-
-func (u *ui) navTabs(r *http.Request, data dashboardControllerData) hb.TagInterface {
-	linksHelper := shared.NewLinksFromRequest(r)
-
-	children := []hb.TagInterface{
-		hb.Hyperlink().
-			Class("text-decoration-none").
-			HTML("Dashboard").
-			Href(linksHelper.Dashboard(nil)),
-		hb.Hyperlink().
-			Class("text-decoration-none").
-			Child(
-				hb.Wrap().
-					Text("Posts ").
-					Child(
-						hb.Span().
-							Class("badge bg-secondary ms-1").
-							Text(strconv.FormatInt(data.postCount, 10)),
-					),
-			).
-			Href(linksHelper.PostManager(nil)),
-	}
-
-	// Only show Categories/Tags tabs if taxonomy is enabled
-	if data.taxonomyEnabled {
-		children = append(children,
-			hb.Hyperlink().
-				Class("text-decoration-none").
-				Child(
-					hb.Wrap().
-						Text("Categories ").
-						Child(
-							hb.Span().
-								Class("badge bg-secondary ms-1").
-								Text(strconv.FormatInt(data.categoryCount, 10)),
-						),
-				).
-				Href(linksHelper.CategoryManager(nil)),
-			hb.Hyperlink().
-				Class("text-decoration-none").
-				Child(
-					hb.Wrap().
-						Text("Tags ").
-						Child(
-							hb.Span().
-								Class("badge bg-secondary ms-1").
-								Text(strconv.FormatInt(data.tagCount, 10)),
-						),
-				).
-				Href(linksHelper.TagManager(nil)),
-		)
-	}
-
-	return hb.Div().
-		Class("card mb-4").
-		Child(
-			hb.Div().
-				Class("card-body d-flex justify-content-center gap-4").
-				Children(children),
-		)
 }
 
 func (u *ui) dashboardCards(r *http.Request, data dashboardControllerData) hb.TagInterface {

@@ -307,6 +307,7 @@ func (u *ui) page(r *http.Request, post blogstore.PostInterface, view string) hb
 
 	return hb.Div().
 		Class("container py-4").
+		Child(shared.Header(u.Store(), u.Logger(), r)).
 		Child(breadcrumbs).
 		Child(heading).
 		Child(postTitle).

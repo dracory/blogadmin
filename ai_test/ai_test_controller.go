@@ -212,6 +212,7 @@ func (u *ui) view(r *http.Request) hb.TagInterface {
 
 	return hb.Div().
 		Class("container min-vh-100 py-4 bg-light").
+		Child(shared.Header(u.Store(), u.Logger(), r)).
 		Child(breadcrumbs).
 		Child(card)
 }

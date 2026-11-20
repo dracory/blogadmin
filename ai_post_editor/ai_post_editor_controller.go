@@ -165,6 +165,7 @@ func (u *ui) view(r *http.Request, data pageData) hb.TagInterface {
 
 	return hb.Div().
 		Class("container min-vh-100 py-4 bg-light").
+		Child(shared.Header(u.Store(), u.Logger(), r)).
 		Child(breadcrumbs).
 		Child(hb.Div().
 			Class("container").

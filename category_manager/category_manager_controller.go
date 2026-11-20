@@ -110,9 +110,9 @@ func (u *ui) renderPage(r *http.Request) string {
 
 	content := hb.Div().
 		Class("container py-4").
+		Child(header).
 		Child(breadcrumbs).
 		Child(heading).
-		Child(header).
 		Child(vueContainer)
 
 	return u.Layout(nil, r, "Blog | Category Manager", content.ToHTML(), struct {
